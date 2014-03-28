@@ -1,0 +1,29 @@
+{
+  "name": "es-sequence",
+  "version": "0.0.1",
+  "description": "Provides sequences of auto-incrementing integers that can be used for document ids.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/.bin/grunt ci"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/analog-nico/es-sequence"
+  },
+  "keywords": ["elasticsearch","elastic","search","es","sequence","auto-increment","increment","_id","id"],
+  "author": "analog-nico <nicolai.kamenzky@testrails.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/analog-nico/es-sequence/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "expect.js": "~0.2.0",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt": "~0.4.1",
+    "grunt-mocha-cli": "~1.1.0",
+    "grunt-complexity": "~0.1.3",
+    "grunt-cli": "~0.1.9"
+  }
+}
