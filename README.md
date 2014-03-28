@@ -14,6 +14,8 @@ This module is installed via npm:
 $ npm install es-sequence
 ```
 
+[![NPM Stats](https://nodei.co/npm/es-sequence.png?downloads=true)](https://npmjs.org/package/es-sequence)
+
 ## Example Usage
 
 ``` js

@@ -1,50 +1,39 @@
+'use strict';
+
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    complexity: {
-      generic: {
-        src: ['app/**/*.js'],
-        options: {
-          errorsOnly: false,
-          cyclometric: 6,       // default is 3
-          halstead: 16,         // default is 8
-          maintainability: 100  // default is 100
-        }
-      }
-    },
     jshint: {
       all: [
         'Gruntfile.js',
-        'app/**/*.js',
-        'test/**/*.js'
+        'test/**/*.js',
+        'index.js'
       ],
       options: {
         jshintrc: '.jshintrc'
       }
     },
-    mochacli: {
-      all: ['test/**/*.js'],
+    jasmine_node: {
       options: {
-        reporter: 'spec',
-        ui: 'tdd'
-      }
+        matchall: true
+      },
+      all: ['test/']
     },
     watch: {
       js: {
         files: ['**/*.js', '!node_modules/**/*.js'],
         tasks: ['default'],
         options: {
-          nospawn: true
+          spawn: true // Since livereload seems not to be working we spawn to require the latest index.js
         }
       }
     }
   });
 
-  grunt.loadNpmTasks('grunt-complexity');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-jasmine-node');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-mocha-cli');
-  grunt.registerTask('test', ['complexity', 'jshint', 'mochacli', 'watch']);
-  grunt.registerTask('ci', ['complexity', 'jshint', 'mochacli']);
+  grunt.registerTask('test', ['jshint', 'jasmine_node', 'watch']);
+  grunt.registerTask('ci', ['jshint', 'jasmine_node']);
   grunt.registerTask('default', ['test']);
 };
