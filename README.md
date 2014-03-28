@@ -16,8 +16,15 @@ $ npm install es-sequence
 
 [![NPM Stats](https://nodei.co/npm/es-sequence.png?downloads=true)](https://npmjs.org/package/es-sequence)
 
-## Example Usage
+## Usage
 
 ``` js
 var sequence = require('es-sequence');
+var elasticsearch = require('elasticsearch');
+
+sequence.init(elasticsearch.Client());
+
+sequence.get('userid', function (id) {
+  // Use id
+});
 ```
