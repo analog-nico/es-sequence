@@ -1,6 +1,8 @@
-# es-sequence
+# Elasticsearch Sequence
 
-Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used for document ids.
+`es-sequence` is a Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used for document ids.
+
+The sequences are persisted by the Elasticsearch cluster which makes them the last missing feature that maybe prevented you from using Elasticsearch as the sole database in your server stack.
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
 
@@ -8,13 +10,19 @@ Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clinto
 
 ## Installation
 
+[![NPM Stats](https://nodei.co/npm/es-sequence.png?downloads=true)](https://npmjs.org/package/es-sequence)
+
 This module is installed via npm:
 
 ``` bash
 $ npm install es-sequence
 ```
 
-[![NPM Stats](https://nodei.co/npm/es-sequence.png?downloads=true)](https://npmjs.org/package/es-sequence)
+`es-sequence` communicates with the Elasticsearch cluster via the [official client library](https://github.com/elasticsearch/elasticsearch-js). Since this dependency is injected during runtime you need to install it yourself:
+
+``` bash
+$ npm install elasticsearch
+```
 
 ## Usage
 
@@ -30,3 +38,18 @@ sequence.init(elasticsearch.Client(), function () {
 
 });
 ```
+
+## Production Readiness
+
+[Travis CI](https://travis-ci.org/analog-nico/es-sequence) does linting and unit testing for all commits. For unit testing it always uses the latest version of the official client library (`elasticsearch`) and a recent version of Elasticsearch (the database). The current build status is displayed at the top of this document.
+
+You can execute the unit tests for your specific environment:
+  1. Make Elasticsearch available on http://localhost:9200 (default port).
+  2. Get a local copy of this repo.
+  3. Go via the command line to the main folder and execute:
+     ``` bash
+     $ npm install
+     $ npm uninstall elasticsearch
+     $ npm install elasticsearch@<your version of choice>
+     $ grunt test
+     ```
