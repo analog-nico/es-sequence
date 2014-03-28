@@ -2,6 +2,8 @@
 
 describe('es-sequence', function() {
 
+  var util = require('util');
+
   var esClient = require('elasticsearch').Client();
   var sequence = require('..');
 
@@ -21,6 +23,7 @@ describe('es-sequence', function() {
       index: name
     }, function (err, response, status) {
       expect(err).toBeUndefined();
+      console.log(util.inspect(response, { showHidden: true, depth: null }));
       expect(response[name].settings.index.auto_expand_replicas).toEqual("0-all");
       expect(response[name].settings.index.number_of_shards).toEqual("1");
       done();
@@ -33,6 +36,7 @@ describe('es-sequence', function() {
       type: nameType
     }, function (err, response, status) {
       expect(err).toBeUndefined();
+      console.log(util.inspect(response, { showHidden: true, depth: null }));
       expect(response[nameIndex].mappings[nameType]._source.enabled).toBe(false);
       expect(response[nameIndex].mappings[nameType]._all.enabled).toBe(false);
       expect(response[nameIndex].mappings[nameType]._type.index).toEqual('no');
