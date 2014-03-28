@@ -4,7 +4,7 @@ Node.js module for Elasticsearch that provides sequences of auto-incrementing in
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
 
-[![build status](https://secure.travis-ci.org/analog-nico/es-sequence.png)](http://travis-ci.org/analog-nico/es-sequence)
+[![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence)
 
 ## Installation
 
