@@ -24,8 +24,12 @@ describe('es-sequence', function() {
     }, function (err, response, status) {
       expect(err).toBeUndefined();
       console.log(util.inspect(response, { showHidden: true, depth: null }));
-      //expect(response[name].settings.index.auto_expand_replicas).toEqual("0-all");
-      //expect(response[name].settings.index.number_of_shards).toEqual("1");
+      expect(response).toBeDefined();
+      expect(response[name]).toBeDefined();
+      expect(response[name].settings).toBeDefined();
+      expect(response[name].settings.index).toBeDefined();
+      expect(response[name].settings.index.auto_expand_replicas).toEqual("0-all");
+      expect(response[name].settings.index.number_of_shards).toEqual("1");
       done();
     });
   }
@@ -37,10 +41,17 @@ describe('es-sequence', function() {
     }, function (err, response, status) {
       expect(err).toBeUndefined();
       console.log(util.inspect(response, { showHidden: true, depth: null }));
-      /*expect(response[nameIndex].mappings[nameType]._source.enabled).toBe(false);
+      expect(response).toBeDefined();
+      expect(response[nameIndex]).toBeDefined();
+      expect(response[nameIndex].mappings).toBeDefined();
+      expect(response[nameIndex].mappings[nameType]).toBeDefined();
+      expect(response[nameIndex].mappings[nameType]._source).toBeDefined();
+      expect(response[nameIndex].mappings[nameType]._source.enabled).toBe(false);
+      expect(response[nameIndex].mappings[nameType]._all).toBeDefined();
       expect(response[nameIndex].mappings[nameType]._all.enabled).toBe(false);
+      expect(response[nameIndex].mappings[nameType]._type).toBeDefined();
       expect(response[nameIndex].mappings[nameType]._type.index).toEqual('no');
-      expect(response[nameIndex].mappings[nameType].enabled).toBe(false);*/
+      expect(response[nameIndex].mappings[nameType].enabled).toBe(false);
       done();
     });
   }
