@@ -22,9 +22,11 @@ $ npm install es-sequence
 var sequence = require('es-sequence');
 var elasticsearch = require('elasticsearch');
 
-sequence.init(elasticsearch.Client());
+sequence.init(elasticsearch.Client(), function () {
 
-sequence.get('userid', function (id) {
-  // Use id
+  sequence.get('userid', function (id) {
+    // Use id
+  });
+
 });
 ```
