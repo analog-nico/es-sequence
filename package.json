@@ -1,7 +1,7 @@
 {
   "name": "es-sequence",
   "version": "0.0.1",
-  "description": "Provides sequences of auto-incrementing integers that can be used for document ids.",
+  "description": "Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used for document ids.",
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/grunt ci"
