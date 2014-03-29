@@ -46,7 +46,7 @@ WARNING: I did not use this module in production yet. However, the [approach](ht
 [Travis CI](https://travis-ci.org/analog-nico/es-sequence) does linting and unit testing for all commits. For unit testing it always uses the latest version of the official client library and a recent if not latest version of Elasticsearch (the database). The current build status is displayed at the top of this document.
 
 You can execute the unit tests for your specific environment:
-  1. Make Elasticsearch available on http://localhost:9200 (default port).
+  1. Make Elasticsearch available on `http://localhost:9200` (default port).
   2. Get a local copy of this repo.
   3. Go via the command line to the main folder and execute:
 
