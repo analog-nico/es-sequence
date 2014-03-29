@@ -23,6 +23,20 @@ var _client,
     };
 
 
+function isInjectedClientValid(client) {
+
+  if (_.isUndefined(client) ||
+      _.isUndefined(client.indices) ||
+      _.isFunction(client.indices.putMapping) === false ||
+      _.isFunction(client.indices.exists) === false ||
+      _.isFunction(client.indices.create) === false ||
+      _.isFunction(client.bulk) === false) {
+    return false;
+  }
+
+  return true;
+}
+
 function ensureEsIndexContainsMapping(done) {
 
   var mapping = {};
@@ -71,7 +85,7 @@ function ensureEsIndexIsInitialized(done) {
 }
 
 function init(client, options, done) {
-  if (_.isUndefined(client)) {
+  if (isInjectedClientValid(client) === false) {
     throw new Error('The parameter value for client is invalid.');
   }
 
@@ -150,7 +164,18 @@ function get(sequenceName, callback) {
   });
 }
 
+function getCacheSize(sequenceName) {
+  if (_.isArray(_cache[sequenceName]) === false) {
+    return 0;
+  } else {
+    return _cache[sequenceName].length;
+  }
+}
+
 module.exports = {
   init: init,
-  get: get
+  get: get,
+  _internal: {
+    getCacheSize: getCacheSize
+  }
 };

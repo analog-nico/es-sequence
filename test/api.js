@@ -65,10 +65,12 @@ describe('The es-sequence API', function() {
   });
 
   it('should throw invalid parameters for init', function (done) {
-    expect(function () { sequence.init();          }).toThrow();
-    expect(function () { sequence.init(undefined); }).toThrow();
-    expect(function () { sequence.init(null);      }).toThrow();
-    expect(function () { sequence.init(esClient);  }).toThrow();
+    expect(function () { sequence.init();               }).toThrow();
+    expect(function () { sequence.init(undefined);      }).toThrow();
+    expect(function () { sequence.init(null);           }).toThrow();
+    expect(function () { sequence.init({});             }).toThrow();
+    expect(function () { sequence.init(function () {}); }).toThrow();
+    expect(function () { sequence.init(esClient);       }).toThrow();
     done();
   });
 
@@ -207,6 +209,52 @@ describe('The es-sequence API', function() {
     }
 
     getNextId(0, 0, done);
+  });
+
+  xit('should keep order while cache is filled', function (done) {
+
+    // Intercept the bulk method which is used to get new ids so it takes longer
+    var bulkOrig = esClient.bulk;
+    esClient.bulk = function() {
+      var _this = this;
+      var _arguments = arguments;
+      setTimeout(function () {
+        bulkOrig.apply(_this, _arguments);
+      }, 100);
+    };
+
+    var count = 3;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        expect(sequence._internal.getCacheSize("cachefilltest")).toBe(100-3);
+        esClient.bulk = bulkOrig;
+        done();
+      }
+    }
+
+    // First call that triggers filling the cache
+    setTimeout(function () {
+      sequence.get("cachefilltest", function (id) {
+        expect(id).toBe(1);
+        countdown();
+      });
+    }, 0);
+
+    setTimeout(function () {
+      sequence.get("cachefilltest", function (id) {
+        expect(id).toBe(2);
+        countdown();
+      });
+    }, 0);
+
+    setTimeout(function () {
+      sequence.get("cachefilltest", function (id) {
+        expect(id).toBe(3);
+        countdown();
+      });
+    }, 0);
+
   });
 
 

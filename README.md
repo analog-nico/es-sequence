@@ -39,7 +39,13 @@ sequence.init(elasticsearch.Client(), function () {
 });
 ```
 
-### sequence.get(sequenceName, callback)
+## API
+
+### es.sequence.init(client, [options], callback)
+
+Description forthcoming.
+
+### es-sequence.get(sequenceName, callback)
 
 Retrieves the next integer of the sequence with the name `sequenceName`. A new sequence starts with `1`. In two consecutive calls the latter will always get a value higher than the former call. However, both values may differ by more than `1` if a node.js server restart occurred in between.
 
