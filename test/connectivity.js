@@ -7,7 +7,7 @@ describe('Regarding connectivity, es-sequence', function() {
 
   it('should accept the elasticsearch client simulator', function (done) {
     expect(function () {
-      sequence.init(esClient, function () {});
+      sequence.init(esClient);
     }).not.toThrow();
     done();
   });

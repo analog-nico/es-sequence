@@ -3,6 +3,7 @@
 describe('The es-sequence API', function() {
 
   var util = require('util');
+  var Promise = require('bluebird');
 
   var esClient = require('elasticsearch').Client();
   var sequence = require('..');
@@ -70,7 +71,6 @@ describe('The es-sequence API', function() {
     expect(function () { sequence.init(null);           }).toThrow();
     expect(function () { sequence.init({});             }).toThrow();
     expect(function () { sequence.init(function () {}); }).toThrow();
-    expect(function () { sequence.init(esClient);       }).toThrow();
     done();
   });
 
@@ -90,24 +90,23 @@ describe('The es-sequence API', function() {
 
   it('should init without options', function (done) {
     // I do not expect the default "sequences" index not to be existing to be able to execute the tests on my test db.
-    sequence.init(esClient, function () {
-      expectIndexToExist('sequences', true, done);
-    });
+    sequence.init(esClient)
+      .then(function () {
+        expectIndexToExist('sequences', true, done);
+      });
   });
 
   it('should init with options for a new index', function (done) {
     expectIndexToExist('testsequences', false, function () {
 
-      sequence.init(esClient, {
-        esIndex: 'testsequences'
-      }, function () {
-
-        expectIndexToExist('testsequences', true, function () {
-          expectIndexToHaveCorrectSettings('testsequences', function () {
-            expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
+      sequence.init(esClient, { esIndex: 'testsequences' })
+        .then(function () {
+          expectIndexToExist('testsequences', true, function () {
+            expectIndexToHaveCorrectSettings('testsequences', function () {
+              expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
+            });
           });
         });
-      });
     });
   });
 
@@ -172,20 +171,21 @@ describe('The es-sequence API', function() {
   });
 
   it('should reinit with same options', function (done) {
-    sequence.init(esClient, function () {
-      sequence.get("anotherId", function (id) {
-        expect(id).toBeGreaterThan(1);
-        done();
-      });
+
+    sequence.init(esClient);
+
+    sequence.get("anotherId", function (id) {
+      expect(id).toBeGreaterThan(1);
+      done();
     });
   });
 
   it('should reinit with same index but different type', function (done) {
-    sequence.init(esClient, {
-      esType: 'sequence2'
-    }, function () {
-      expectIndexToHaveCorrectMappingForType('testsequences', 'sequence2', done);
-    });
+
+    sequence.init(esClient, { esType: 'sequence2' })
+      .then(function () {
+        expectIndexToHaveCorrectMappingForType('testsequences', 'sequence2', done);
+      });
   });
 
   it('should count a sequence with the same name but other type from 1', function (done) {
@@ -307,20 +307,85 @@ describe('The es-sequence API', function() {
 
   });
 
+  it('should defer get request while init creates the index', function (done) {
 
-  it('cleanup', function (done) {
-
-    function deleteIndex(name, done) {
-      esClient.indices.delete({
-        index: name
-      }, function (err, response, status) {
-        expect(err).toBeUndefined();
-        done();
+    // Intercept the method to create an index so it takes longer
+    var createOrig = esClient.indices.create;
+    esClient.indices.create = function() {
+      var _arguments = arguments;
+      return Promise.resolve().delay(50).then(function () {
+        return createOrig.apply(esClient.indices, _arguments);
       });
+    };
+
+    var count = 2;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        esClient.indices.create = createOrig;
+        done();
+      }
     }
 
-    deleteIndex('testsequences', done);
+    sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence' })
+      .then(function () {
+        expectIndexToExist('testsequences2', true, function () {
+          expectIndexToHaveCorrectSettings('testsequences2', function () {
+            expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence', countdown);
+          });
+        });
+      });
 
+    sequence.get("defertest", function (id) {
+      expect(id).toBe(1);
+      countdown();
+    });
+
+  });
+
+  it('should defer get request while init creates new mapping', function (done) {
+
+    // Intercept the method to create an index so it takes longer
+    var putMappingOrig = esClient.indices.putMapping;
+    esClient.indices.putMapping = function() {
+      var _arguments = arguments;
+      return Promise.resolve().delay(50).then(function () {
+        return putMappingOrig.apply(esClient.indices, _arguments);
+      });
+    };
+
+    var count = 2;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        esClient.indices.putMapping = putMappingOrig;
+        done();
+      }
+    }
+
+    sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence2' })
+      .then(function () {
+        expectIndexToExist('testsequences2', true, function () {
+          expectIndexToHaveCorrectSettings('testsequences2', function () {
+            expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence2', countdown);
+          });
+        });
+      });
+
+    sequence.get("defertest", function (id) {
+      expect(id).toBe(1);
+      countdown();
+    });
+
+  });
+
+
+  it('cleanup index testsequences', function (done) {
+    esClient.indices.delete({ index: 'testsequences' }, done);
+  });
+
+  it('cleanup index testsequences2', function (done) {
+    esClient.indices.delete({ index: 'testsequences2' }, done);
   });
 
 });

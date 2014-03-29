@@ -30,18 +30,18 @@ $ npm install elasticsearch
 var sequence = require('es-sequence');
 var elasticsearch = require('elasticsearch');
 
-sequence.init(elasticsearch.Client(), function () {
+// Initialize es-sequence during server startup
+sequence.init(elasticsearch.Client());
 
-  sequence.get('userid', function (id) {
-    // Use id
-  });
-
+// Call get from anywhere
+sequence.get('userid', function (id) {
+  // Use the id here
 });
 ```
 
 ## API
 
-### sequence.init(client, [options], callback)
+### sequence.init(client, [options])
 
 Description forthcoming.
 

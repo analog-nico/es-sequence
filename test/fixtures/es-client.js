@@ -1,9 +1,14 @@
+'use strict';
+
+var Promise = require('bluebird');
+
+
 function indexCreate() {
 
 }
 
 function indexExists() {
-
+  return Promise.resolve(true);
 }
 
 function indexPutMapping() {

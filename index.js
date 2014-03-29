@@ -4,6 +4,7 @@ var _ = require('lodash');
 
 
 var _client,
+    _initPromise = null,
     _cache = {},
     _cacheFillPromise = null,
     _options = { esIndex: 'sequences', esType: 'sequence' },
@@ -38,54 +39,43 @@ function isInjectedClientValid(client) {
   return true;
 }
 
-function ensureEsIndexContainsMapping(done) {
+function ensureEsIndexContainsMapping() {
 
   var mapping = {};
   mapping[_options.esType] = _internalOptions.esTypeMapping;
 
-  _client.indices.putMapping({
+  return _client.indices.putMapping({
     index: _options.esIndex,
     type: _options.esType,
     ignore_conflicts: true,
     body: mapping
-  }, function (err, response, status) {
-    if (err) {
-      throw err;
-    }
-    done();
   });
 }
 
-function ensureEsIndexIsInitialized(done) {
+function ensureEsIndexIsInitialized() {
 
-  _client.indices.exists({
+  _initPromise = _client.indices.exists({
     index: _options.esIndex
-  }, function (err, response, status) {
-    if (err) {
-      throw err;
-    }
-
+  }).then(function (response) {
     if (response === true) {
-      ensureEsIndexContainsMapping(done);
-      return;
+      return ensureEsIndexContainsMapping();
     }
 
     var config = _.cloneDeep(_internalOptions.esIndexConfig);
     config.mappings[_options.esType] = _internalOptions.esTypeMapping;
 
-    _client.indices.create({
+    return _client.indices.create({
       index: _options.esIndex,
       body: config
-    }, function (err, response, status) {
-      if (err) {
-        throw err;
-      }
-      done();
     });
+  }).then(function () {
+    _initPromise = null;
   });
+
+  return _initPromise;
 }
 
-function init(client, options, done) {
+function init(client, options) {
   if (isInjectedClientValid(client) === false) {
     throw new Error('The parameter value for client is invalid.');
   }
@@ -101,16 +91,7 @@ function init(client, options, done) {
     _.merge(_options, options);
   }
 
-  var _done = done;
-  if (_.isUndefined(_done)) {
-    if (_.isFunction(options)) {
-      _done = options;
-    } else {
-      throw new Error('Please provide a callback.');
-    }
-  }
-
-  ensureEsIndexIsInitialized(_done);
+  return ensureEsIndexIsInitialized();
 }
 
 function fillCache(sequenceName) {
@@ -170,6 +151,14 @@ function getWithParamCheck(sequenceName, callback) {
 
   if (_.isFunction(callback) === false) {
     throw new Error('The parameter value for callback is invalid.');
+  }
+
+  if (_initPromise !== null) {
+    // Defer until init is done
+    _initPromise.then(function () {
+      get(sequenceName, callback);
+    });
+    return;
   }
 
   get(sequenceName, callback);
