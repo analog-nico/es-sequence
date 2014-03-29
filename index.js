@@ -120,7 +120,12 @@ function get(name, callback) {
   }
 
   if (_cache[name] !== undefined && _cache[name].length > 0) {
-    callback(_cache[name].shift());
+    // Even though the callback could be called synchronously
+    // calling it asynchronously in all cases confuses less developers.
+    var id = _cache[name].shift();
+    process.nextTick(function () {
+      callback(id);
+    });
     return;
   }
 
