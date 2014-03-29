@@ -1,6 +1,6 @@
 'use strict';
 
-describe('es-sequence', function() {
+describe('The es-sequence API', function() {
 
   var util = require('util');
 
@@ -64,10 +64,25 @@ describe('es-sequence', function() {
     done();
   });
 
-  it('should throw missing callback for init', function (done) {
-    expect(function () {
-      sequence.init(esClient);
-    }).toThrow();
+  it('should throw invalid parameters for init', function (done) {
+    expect(function () { sequence.init();          }).toThrow();
+    expect(function () { sequence.init(undefined); }).toThrow();
+    expect(function () { sequence.init(null);      }).toThrow();
+    expect(function () { sequence.init(esClient);  }).toThrow();
+    done();
+  });
+
+  it ('should throw invalid parameters for get', function (done) {
+    expect(function () { sequence.get(undefined, function () {} ); }).toThrow();
+    expect(function () { sequence.get();                           }).toThrow();
+    expect(function () { sequence.get(null);                       }).toThrow();
+    expect(function () { sequence.get(null, null);                 }).toThrow();
+    expect(function () { sequence.get("x");                        }).toThrow();
+    expect(function () { sequence.get("x", null);                  }).toThrow();
+    expect(function () { sequence.get(null, function () {} );      }).toThrow();
+    expect(function () { sequence.get(false, function () {} );     }).toThrow();
+    expect(function () { sequence.get("x", false );                }).toThrow();
+    expect(function () { sequence.get("", function () {} );        }).toThrow();
     done();
   });
 
@@ -122,7 +137,7 @@ describe('es-sequence', function() {
     });
   });
 
-  it('should retrieve a thousand ids from a sequence', function (done) {
+  it('should be able to retrieve a thousand ids from a sequence', function (done) {
 
     function getNextId(lastId, i, done) {
       sequence.get("userId", function (id) {
@@ -176,6 +191,22 @@ describe('es-sequence', function() {
       expect(id).toBe(1);
       done();
     });
+  });
+
+  it('should allow sequences names with special characters', function (done) {
+
+    function getNextId(lastId, i, done) {
+    sequence.get("^°!\"§$%&/()=?*+'#-_.:,;<>|\\…÷∞˛~›˘∫‹√◊≈‡≤≥‘’@ﬂ∆ˆºıªƒ∂‚•π∏⁄Ω†€‰∑¿˙≠{}·˜][ﬁ“”„“ ¡¢£¤¥¦§¨©ª«¬®¯°±²³´`µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖŒ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøœùúûüýþÿ™", function (id) {
+        expect(id).toBe(lastId+1);
+        if (i < 1000) {
+          getNextId(id, i+1, done);
+        } else {
+          done();
+        }
+      });
+    }
+
+    getNextId(0, 0, done);
   });
 
 
