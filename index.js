@@ -5,6 +5,7 @@ var _ = require('lodash');
 
 var _client,
     _cache = {},
+    _cacheFillPromise = null,
     _options = { esIndex: 'sequences', esType: 'sequence' },
     _internalOptions = {
       esIndexConfig: {
@@ -27,9 +28,9 @@ function isInjectedClientValid(client) {
 
   if (_.isUndefined(client) ||
       _.isUndefined(client.indices) ||
-      _.isFunction(client.indices.putMapping) === false ||
-      _.isFunction(client.indices.exists) === false ||
       _.isFunction(client.indices.create) === false ||
+      _.isFunction(client.indices.exists) === false ||
+      _.isFunction(client.indices.putMapping) === false ||
       _.isFunction(client.bulk) === false) {
     return false;
   }
@@ -89,6 +90,10 @@ function init(client, options, done) {
     throw new Error('The parameter value for client is invalid.');
   }
 
+  if (_cacheFillPromise !== null) {
+    throw new Error('You cannot call init while get requests are pending.');
+  }
+
   _client = client;
   _cache = {}; // In case init is called multiple times.
 
@@ -108,7 +113,7 @@ function init(client, options, done) {
   ensureEsIndexIsInitialized(_done);
 }
 
-function fillCache(sequenceName, done) {
+function fillCache(sequenceName) {
   if (_.isArray(_cache[sequenceName]) === false) {
     _cache[sequenceName] = [];
   }
@@ -121,21 +126,40 @@ function fillCache(sequenceName, done) {
     bulkParams.body.push({});
   }
 
-  _client.bulk(bulkParams, function (err, response, status) {
-    if (err) {
-      throw err;
-    }
-
+  return _client.bulk(bulkParams).then(function (response) {
     for ( var k = 0; k < response.items.length; k+=1 ) {
       // This is the core trick: The document's version is an auto-incrementing integer.
       _cache[sequenceName].push(response.items[k].index._version);
     }
-
-    done();
   });
 }
 
 function get(sequenceName, callback) {
+  if (_.isArray(_cache[sequenceName]) && _cache[sequenceName].length > 0) {
+    // Even though the callback could be called synchronously, calling it
+    // asynchronously in all cases creates less confusion / bug hunting.
+    // Also limits an hopefully never occurring endless loop through recursion.
+    var id = _cache[sequenceName].shift();
+    process.nextTick(function () {
+      callback(id);
+    });
+    return;
+  }
+
+  function returnValue() {
+    get(sequenceName, callback);
+  }
+
+  if (_cacheFillPromise !== null) {
+    _cacheFillPromise.then(returnValue);
+  } else {
+    _cacheFillPromise = fillCache(sequenceName).then(returnValue).then(function () {
+      _cacheFillPromise = null;
+    });
+  }
+}
+
+function getWithParamCheck(sequenceName, callback) {
   if (_.isUndefined(_client)) {
     throw new Error('Please run init(...) first to provide an elasticsearch client.');
   }
@@ -148,20 +172,7 @@ function get(sequenceName, callback) {
     throw new Error('The parameter value for callback is invalid.');
   }
 
-  if (_.isArray(_cache[sequenceName]) && _cache[sequenceName].length > 0) {
-    // Even though the callback could be called synchronously, calling it
-    // asynchronously in all cases creates less confusion / bug hunting.
-    var id = _cache[sequenceName].shift();
-    process.nextTick(function () {
-      callback(id);
-    });
-    return;
-  }
-
-  // FIXME: Between the fillCache call and the execution of the callback another get invocation may take place.
-  fillCache(sequenceName, function () {
-    callback(_cache[sequenceName].shift());
-  });
+  get(sequenceName, callback);
 }
 
 function getCacheSize(sequenceName) {
@@ -174,7 +185,7 @@ function getCacheSize(sequenceName) {
 
 module.exports = {
   init: init,
-  get: get,
+  get: getWithParamCheck,
   _internal: {
     getCacheSize: getCacheSize
   }

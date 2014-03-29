@@ -1,6 +1,6 @@
 # Elasticsearch Sequence
 
-[![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence)
+[![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence) [![Dependencies up to date](https://david-dm.org/analog-nico/es-sequence.png)](https://david-dm.org/analog-nico/es-sequence)
 
 `es-sequence` is a Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used to set the id of new documents.
 
@@ -41,11 +41,11 @@ sequence.init(elasticsearch.Client(), function () {
 
 ## API
 
-### es.sequence.init(client, [options], callback)
+### sequence.init(client, [options], callback)
 
 Description forthcoming.
 
-### es-sequence.get(sequenceName, callback)
+### sequence.get(sequenceName, callback)
 
 Retrieves the next integer of the sequence with the name `sequenceName`. A new sequence starts with `1`. In two consecutive calls the latter will always get a value higher than the former call. However, both values may differ by more than `1` if a node.js server restart occurred in between.
 

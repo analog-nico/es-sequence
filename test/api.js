@@ -211,16 +211,12 @@ describe('The es-sequence API', function() {
     getNextId(0, 0, done);
   });
 
-  xit('should keep order while cache is filled', function (done) {
+  it('should keep order while cache is filled', function (done) {
 
     // Intercept the bulk method which is used to get new ids so it takes longer
     var bulkOrig = esClient.bulk;
     esClient.bulk = function() {
-      var _this = this;
-      var _arguments = arguments;
-      setTimeout(function () {
-        bulkOrig.apply(_this, _arguments);
-      }, 100);
+      return bulkOrig.apply(this, arguments).delay(100);
     };
 
     var count = 3;
@@ -234,26 +230,80 @@ describe('The es-sequence API', function() {
     }
 
     // First call that triggers filling the cache
-    setTimeout(function () {
-      sequence.get("cachefilltest", function (id) {
-        expect(id).toBe(1);
-        countdown();
-      });
-    }, 0);
+    sequence.get("cachefilltest", function (id) {
+      expect(id).toBe(1);
+      countdown();
+    });
 
-    setTimeout(function () {
-      sequence.get("cachefilltest", function (id) {
-        expect(id).toBe(2);
-        countdown();
-      });
-    }, 0);
+    sequence.get("cachefilltest", function (id) {
+      expect(id).toBe(2);
+      countdown();
+    });
 
-    setTimeout(function () {
-      sequence.get("cachefilltest", function (id) {
-        expect(id).toBe(3);
+    sequence.get("cachefilltest", function (id) {
+      expect(id).toBe(3);
+      countdown();
+    });
+
+  });
+
+  it('should handle queueing gets with multiple cache fills required', function (done) {
+
+    // Intercept the bulk method which is used to get new ids so it takes longer
+    var bulkOrig = esClient.bulk;
+    esClient.bulk = function() {
+      return bulkOrig.apply(this, arguments).delay(100);
+    };
+
+    var count = 1000;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        expect(sequence._internal.getCacheSize("cachefilltest2")).toBe(10*100 - 1000);
+        esClient.bulk = bulkOrig;
+        done();
+      }
+    }
+
+    function executeGet(expectedValue) {
+      sequence.get("cachefilltest2", function (id) {
+        expect(id).toBe(expectedValue);
         countdown();
       });
-    }, 0);
+    }
+
+    for ( var i = 0; i < 1000; i+=1 ) {
+      executeGet(i+1);
+    }
+
+  });
+
+  it('should throw reinit on pending cache fill', function (done) {
+
+    // Intercept the bulk method which is used to get new ids so it takes longer
+    var bulkOrig = esClient.bulk;
+    esClient.bulk = function() {
+      return bulkOrig.apply(this, arguments).delay(50);
+    };
+
+    var count = 2;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        esClient.bulk = bulkOrig;
+        done();
+      }
+    }
+
+    sequence.get("cachefilltest3", function (id) {
+      expect(id).toBe(1);
+      countdown();
+    });
+
+    expect(function () {
+      sequence.init(esClient);
+    }).toThrow();
+    countdown();
 
   });
 
