@@ -3,3 +3,5 @@ node_js:
   - "0.10"
 services:
   - elasticsearch
+before_script:
+  - curl -XGET 'localhost:9200'
