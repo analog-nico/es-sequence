@@ -39,6 +39,19 @@ sequence.init(elasticsearch.Client(), function () {
 });
 ```
 
+### sequence.get(sequenceName, callback)
+
+Retrieves the next integer of the sequence with the name `sequenceName`. A new sequence starts with `1`. In two consecutive calls the latter will always get a value higher than the former call. However, both values may differ by more than `1` if a node.js server restart occurred in between.
+
+`sequenceName` can be any string.
+
+`callback` is called to return the retrieved integer as the first parameter:
+``` js
+function myCallback(id) {
+  // Use the id here
+}
+```
+
 ## Production Readiness
 
 WARNING: I did not use this module in production yet. However, the [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html) is not too risky.
