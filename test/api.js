@@ -58,13 +58,6 @@ describe('The es-sequence API', function() {
   }
 
 
-  it('should throw missing init', function (done) {
-    expect(function () {
-      sequence.get("userId");
-    }).toThrow();
-    done();
-  });
-
   it('should throw invalid parameters for init', function (done) {
     expect(function () { sequence.init();               }).toThrow();
     expect(function () { sequence.init(undefined);      }).toThrow();
@@ -74,17 +67,8 @@ describe('The es-sequence API', function() {
     done();
   });
 
-  it ('should throw invalid parameters for get', function (done) {
-    expect(function () { sequence.get(undefined, function () {} ); }).toThrow();
-    expect(function () { sequence.get();                           }).toThrow();
-    expect(function () { sequence.get(null);                       }).toThrow();
-    expect(function () { sequence.get(null, null);                 }).toThrow();
-    expect(function () { sequence.get("x");                        }).toThrow();
-    expect(function () { sequence.get("x", null);                  }).toThrow();
-    expect(function () { sequence.get(null, function () {} );      }).toThrow();
-    expect(function () { sequence.get(false, function () {} );     }).toThrow();
-    expect(function () { sequence.get("x", false );                }).toThrow();
-    expect(function () { sequence.get("", function () {} );        }).toThrow();
+  it('should throw missing init', function (done) {
+    expect(function () { sequence.get("userId");        }).toThrow();
     done();
   });
 
@@ -100,55 +84,68 @@ describe('The es-sequence API', function() {
     expectIndexToExist('testsequences', false, function () {
 
       sequence.init(esClient, { esIndex: 'testsequences' })
-        .then(function () {
-          expectIndexToExist('testsequences', true, function () {
-            expectIndexToHaveCorrectSettings('testsequences', function () {
-              expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
+          .then(function () {
+            expectIndexToExist('testsequences', true, function () {
+              expectIndexToHaveCorrectSettings('testsequences', function () {
+                expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
+              });
             });
           });
-        });
     });
+  });
+
+  it ('should throw invalid parameters for get', function (done) {
+    expect(function () { sequence.get();      }).toThrow();
+    expect(function () { sequence.get(null);  }).toThrow();
+    expect(function () { sequence.get(false); }).toThrow();
+    expect(function () { sequence.get("");    }).toThrow();
+    done();
   });
 
   it('should retrieve the value for a new sequence', function (done) {
-    sequence.get("userId", function (id) {
-      expect(id).toBe(1);
-      done();
-    });
+    sequence.get("userId")
+      .then(function (id) {
+        expect(id).toBe(1);
+        done();
+      });
   });
 
   it('should retrieve the value for an existing sequence', function (done) {
-    sequence.get("userId", function (id) {
-      expect(id).toBe(2);
-      done();
-    });
+    sequence.get("userId")
+      .then(function (id) {
+        expect(id).toBe(2);
+        done();
+      });
   });
 
   it('should retrieve the value for another new sequence', function (done) {
-    sequence.get("anotherId", function (id) {
-      expect(id).toBe(1);
-      done();
-    });
+    sequence.get("anotherId")
+      .then(function (id) {
+        expect(id).toBe(1);
+        done();
+      });
   });
 
   it('should keep different sequences separate', function (done) {
-    sequence.get("userId", function (id) {
-      expect(id).toBe(3);
-      done();
-    });
+    sequence.get("userId")
+      .then(function (id) {
+        expect(id).toBe(3);
+        done();
+      });
   });
 
   it('should be able to retrieve a thousand ids from a sequence', function (done) {
 
     function getNextId(lastId, i, done) {
-      sequence.get("userId", function (id) {
-        expect(id).toBe(lastId+1);
-        if (i < 1000) {
-          getNextId(id, i+1, done);
-        } else {
-          done();
-        }
-      });
+      sequence.get("userId")
+        .then(function (id) {
+          expect(id).toBe(lastId+1);
+          if (i < 1000) {
+            getNextId(id, i+1, done);
+          } else {
+            done();
+          }
+        });
     }
 
     getNextId(3, 0, done);
@@ -157,14 +154,15 @@ describe('The es-sequence API', function() {
   it('should keep different sequences separate even after cache refreshes', function (done) {
 
     function getNextId(lastId, i, done) {
-      sequence.get("anotherId", function (id) {
-        expect(id).toBe(lastId+1);
-        if (i < 1000) {
-          getNextId(id, i+1, done);
-        } else {
-          done();
-        }
-      });
+      sequence.get("anotherId")
+        .then(function (id) {
+          expect(id).toBe(lastId+1);
+          if (i < 1000) {
+            getNextId(id, i+1, done);
+          } else {
+            done();
+          }
+        });
     }
 
     getNextId(1, 0, done);
@@ -174,10 +172,12 @@ describe('The es-sequence API', function() {
 
     sequence.init(esClient);
 
-    sequence.get("anotherId", function (id) {
-      expect(id).toBeGreaterThan(1);
-      done();
-    });
+    sequence.get("anotherId")
+      .then(function (id) {
+        // 1001 retrieved ids + 99 discarded ids in cache
+        expect(id).toBeGreaterThan(1 + 1000 + 99);
+        done();
+      });
   });
 
   it('should reinit with same index but different type', function (done) {
@@ -189,16 +189,18 @@ describe('The es-sequence API', function() {
   });
 
   it('should count a sequence with the same name but other type from 1', function (done) {
-    sequence.get("userId", function (id) {
-      expect(id).toBe(1);
-      done();
-    });
+    sequence.get("userId")
+      .then(function (id) {
+        expect(id).toBe(1);
+        done();
+      });
   });
 
   it('should allow sequences names with special characters', function (done) {
 
     function getNextId(lastId, i, done) {
-    sequence.get("^°!\"§$%&/()=?*+'#-_.:,;<>|\\…÷∞˛~›˘∫‹√◊≈‡≤≥‘’@ﬂ∆ˆºıªƒ∂‚•π∏⁄Ω†€‰∑¿˙≠{}·˜][ﬁ“”„“ ¡¢£¤¥¦§¨©ª«¬®¯°±²³´`µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖŒ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøœùúûüýþÿ™", function (id) {
+    sequence.get("^°!\"§$%&/()=?*+'#-_.:,;<>|\\…÷∞˛~›˘∫‹√◊≈‡≤≥‘’@ﬂ∆ˆºıªƒ∂‚•π∏⁄Ω†€‰∑¿˙≠{}·˜][ﬁ“”„“ ¡¢£¤¥¦§¨©ª«¬®¯°±²³´`µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖŒ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøœùúûüýþÿ™")
+      .then(function (id) {
         expect(id).toBe(lastId+1);
         if (i < 1000) {
           getNextId(id, i+1, done);
@@ -230,20 +232,23 @@ describe('The es-sequence API', function() {
     }
 
     // First call that triggers filling the cache
-    sequence.get("cachefilltest", function (id) {
-      expect(id).toBe(1);
-      countdown();
-    });
+    sequence.get("cachefilltest")
+      .then(function (id) {
+        expect(id).toBe(1);
+        countdown();
+      });
 
-    sequence.get("cachefilltest", function (id) {
-      expect(id).toBe(2);
-      countdown();
-    });
+    sequence.get("cachefilltest")
+      .then(function (id) {
+        expect(id).toBe(2);
+        countdown();
+      });
 
-    sequence.get("cachefilltest", function (id) {
-      expect(id).toBe(3);
-      countdown();
-    });
+    sequence.get("cachefilltest")
+      .then(function (id) {
+        expect(id).toBe(3);
+        countdown();
+      });
 
   });
 
@@ -266,10 +271,11 @@ describe('The es-sequence API', function() {
     }
 
     function executeGet(expectedValue) {
-      sequence.get("cachefilltest2", function (id) {
-        expect(id).toBe(expectedValue);
-        countdown();
-      });
+      sequence.get("cachefilltest2")
+        .then(function (id) {
+          expect(id).toBe(expectedValue);
+          countdown();
+        });
     }
 
     for ( var i = 0; i < 1000; i+=1 ) {
@@ -295,10 +301,12 @@ describe('The es-sequence API', function() {
       }
     }
 
-    sequence.get("cachefilltest3", function (id) {
-      expect(id).toBe(1);
-      countdown();
-    });
+    sequence.get("cachefilltest3")
+      .then(function (id) {
+        expect(id).toBe(1);
+        expect(count).toBe(1); // Finished last
+        countdown();
+      });
 
     expect(function () {
       sequence.init(esClient);
@@ -313,12 +321,12 @@ describe('The es-sequence API', function() {
     var createOrig = esClient.indices.create;
     esClient.indices.create = function() {
       var _arguments = arguments;
-      return Promise.resolve().delay(50).then(function () {
+      return Promise.delay(50).then(function () {
         return createOrig.apply(esClient.indices, _arguments);
       });
     };
 
-    var count = 2;
+    var count = 3;
     function countdown() {
       count -= 1;
       if (count === 0) {
@@ -329,6 +337,7 @@ describe('The es-sequence API', function() {
 
     sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence' })
       .then(function () {
+        countdown();
         expectIndexToExist('testsequences2', true, function () {
           expectIndexToHaveCorrectSettings('testsequences2', function () {
             expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence', countdown);
@@ -336,10 +345,12 @@ describe('The es-sequence API', function() {
         });
       });
 
-    sequence.get("defertest", function (id) {
-      expect(id).toBe(1);
-      countdown();
-    });
+    sequence.get("defertest")
+      .then(function (id) {
+        expect(id).toBe(1);
+        expect(count).toBeLessThan(3); // Finished last
+        countdown();
+      });
 
   });
 
@@ -349,12 +360,12 @@ describe('The es-sequence API', function() {
     var putMappingOrig = esClient.indices.putMapping;
     esClient.indices.putMapping = function() {
       var _arguments = arguments;
-      return Promise.resolve().delay(50).then(function () {
+      return Promise.delay(50).then(function () {
         return putMappingOrig.apply(esClient.indices, _arguments);
       });
     };
 
-    var count = 2;
+    var count = 3;
     function countdown() {
       count -= 1;
       if (count === 0) {
@@ -365,6 +376,7 @@ describe('The es-sequence API', function() {
 
     sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence2' })
       .then(function () {
+        countdown();
         expectIndexToExist('testsequences2', true, function () {
           expectIndexToHaveCorrectSettings('testsequences2', function () {
             expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence2', countdown);
@@ -372,10 +384,12 @@ describe('The es-sequence API', function() {
         });
       });
 
-    sequence.get("defertest", function (id) {
-      expect(id).toBe(1);
-      countdown();
-    });
+    sequence.get("defertest")
+      .then(function (id) {
+        expect(id).toBe(1);
+        expect(count).toBeLessThan(3); // Finished last
+        countdown();
+      });
 
   });
 

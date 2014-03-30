@@ -27,10 +27,10 @@
     "url": "https://github.com/analog-nico/es-sequence/issues"
   },
   "dependencies": {
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "bluebird": "^1.2.0"
   },
   "devDependencies": {
-    "bluebird": "^1.2.0",
     "elasticsearch": "*",
     "grunt": "~0.4.4",
     "grunt-cli": "~0.1.13",

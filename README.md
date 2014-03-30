@@ -40,7 +40,7 @@ var esClient = require('elasticsearch').Client();
 sequence.init(esClient);
 
 // Call get from anywhere
-sequence.get('post_id', function (id) {
+sequence.get('post_id').then(function (id) {
 
   // Use the id here, e.g. to set the id of a new document:
   esClient.index({
@@ -61,7 +61,7 @@ sequence.get('post_id', function (id) {
 
 ### sequence.init(client, [options])
 
-Initialization to be called **once** during server startup.
+Initialization should be called **once** during server startup.
 
 `client` must be a client instance of the [official Elasticsearch client library](https://github.com/elasticsearch/elasticsearch-js). It is used to set up sequences the first time they are requested through `get` and to retrieve new ids.
 
@@ -77,18 +77,34 @@ Pass the options accordingly to overwrite the defaults. These parameters are use
 
 The index is configured by `init` for optimal performance. Thus you must use this index for sequences only!
 
-### sequence.get(sequenceName, callback)
+#### Error Handling
+
+`init` returns a promise which resolves all asynchronous initialization steps. You can use it to handle any errors:
+``` js
+sequence.init(esClient)
+  .catch(function (error) {
+    // Add your error handling code here.
+  });
+```
+
+You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and fail itself if the initialization had failed.
+
+### sequence.get(sequenceName)
 
 Retrieves the next integer of the sequence with the name `sequenceName`. A new sequence starts with `1`. In two consecutive calls the latter will always get a value higher than the former call. However, both values may differ by more than `1` if a node.js server restart occurred in between.
 
 `sequenceName` can be any string.
 
-`callback` is called to return the retrieved integer as the first parameter:
+Returns a promise. Call `then(...)` to pass a callback that will get the retrieved integer as the first parameter:
 ``` js
-function myCallback(id) {
+sequence.get(sequenceName).then(function (id) {
   // Use the id here
-}
+});
 ```
+
+#### Error Handling
+
+Description forthcoming.
 
 ## Production Readiness
 

@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var Promise = require('bluebird');
 
 
 var _client,
@@ -107,40 +108,37 @@ function fillCache(sequenceName) {
     bulkParams.body.push({});
   }
 
-  return _client.bulk(bulkParams).then(function (response) {
-    for ( var k = 0; k < response.items.length; k+=1 ) {
-      // This is the core trick: The document's version is an auto-incrementing integer.
-      _cache[sequenceName].push(response.items[k].index._version);
-    }
-  });
+  _cacheFillPromise = _client.bulk(bulkParams)
+    .then(function (response) {
+      for ( var k = 0; k < response.items.length; k+=1 ) {
+        // This is the core trick: The document's version is an auto-incrementing integer.
+        _cache[sequenceName].push(response.items[k].index._version);
+      }
+    })
+    .then(function () {
+      _cacheFillPromise = null;
+    });
+
+  return _cacheFillPromise;
 }
 
-function get(sequenceName, callback) {
+function get(sequenceName) {
   if (_.isArray(_cache[sequenceName]) && _cache[sequenceName].length > 0) {
-    // Even though the callback could be called synchronously, calling it
-    // asynchronously in all cases creates less confusion / bug hunting.
-    // Also limits an hopefully never occurring endless loop through recursion.
-    var id = _cache[sequenceName].shift();
-    process.nextTick(function () {
-      callback(id);
-    });
-    return;
+    return Promise.resolve(_cache[sequenceName].shift());
   }
 
   function returnValue() {
-    get(sequenceName, callback);
+    return get(sequenceName);
   }
 
   if (_cacheFillPromise !== null) {
-    _cacheFillPromise.then(returnValue);
+    return _cacheFillPromise.then(returnValue);
   } else {
-    _cacheFillPromise = fillCache(sequenceName).then(returnValue).then(function () {
-      _cacheFillPromise = null;
-    });
+    return fillCache(sequenceName).then(returnValue);
   }
 }
 
-function getWithParamCheck(sequenceName, callback) {
+function getWithParamCheck(sequenceName) {
   if (_.isUndefined(_client)) {
     throw new Error('Please run init(...) first to provide an elasticsearch client.');
   }
@@ -149,19 +147,14 @@ function getWithParamCheck(sequenceName, callback) {
     throw new Error('The parameter value for sequenceName is invalid.');
   }
 
-  if (_.isFunction(callback) === false) {
-    throw new Error('The parameter value for callback is invalid.');
-  }
-
   if (_initPromise !== null) {
     // Defer until init is done
-    _initPromise.then(function () {
-      get(sequenceName, callback);
+    return _initPromise.then(function () {
+      return get(sequenceName);
     });
-    return;
   }
 
-  get(sequenceName, callback);
+  return get(sequenceName);
 }
 
 function getCacheSize(sequenceName) {
