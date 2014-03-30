@@ -8,6 +8,10 @@ The sequences are persisted by the Elasticsearch cluster which makes them the la
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
 
+2014-03-30, **Note on the failing build**: Travis CI currently provides Elasticsearch v0.90.10 which is incompatible with the latest Elasticsearch client. I could use an earlier version of the client but then also some checks in the unit tests need to be changed. So I will wait until Travis CI upgrades to Elasticsearch v1.1.
+
+I currently use Elasticsearch v1.1.0 and the client v2.1.0 for development. All unit tests pass.
+
 ## Installation
 
 [![NPM Stats](https://nodei.co/npm/es-sequence.png?downloads=true)](https://npmjs.org/package/es-sequence)
@@ -28,14 +32,26 @@ $ npm install elasticsearch
 
 ``` js
 var sequence = require('es-sequence');
-var elasticsearch = require('elasticsearch');
+var esClient = require('elasticsearch').Client();
 
 // Initialize es-sequence during server startup
-sequence.init(elasticsearch.Client());
+sequence.init(esClient);
 
 // Call get from anywhere
-sequence.get('userid', function (id) {
-  // Use the id here
+sequence.get('post_id', function (id) {
+
+  // Use the id here, e.g. to set the id of a new document:
+  esClient.index({
+    index: 'blog',
+    type: 'post',
+    id: id, // <--
+    body: {
+      title: 'JavaScript Everywhere!',
+      content: 'It all started when...',
+      date: '2013-12-17'
+    }
+  });
+
 });
 ```
 
@@ -43,7 +59,22 @@ sequence.get('userid', function (id) {
 
 ### sequence.init(client, [options])
 
-Description forthcoming.
+Initialization to be called **once** during server startup.
+
+`client` must be a client instance of the [official Elasticsearch client library](https://github.com/elasticsearch/elasticsearch-js). It is used to set up sequences the first time they are requested through `get` and to retrieve new ids.
+
+`options` default to:
+``` js
+{
+  esIndex: 'sequences',
+  esType: 'sequence'
+}
+
+```
+
+Pass the options accordingly to overwrite the defaults. These parameters are used to store and update documents that represent a sequence in the index `esIndex` of document type `esType`.
+
+The index is configured by `init` for optimal performance. Thus you must use this index for sequences only!
 
 ### sequence.get(sequenceName, callback)
 
