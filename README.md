@@ -8,6 +8,8 @@ The sequences are persisted by the Elasticsearch cluster which makes them the la
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
 
+---
+
 2014-03-30, **Note on the failing build**: Travis CI currently provides Elasticsearch v0.90.10 which is incompatible with the latest Elasticsearch client. I could use an earlier version of the client but then also some checks in the unit tests need to be changed. So I will wait until Travis CI upgrades to Elasticsearch v1.1.
 
 I currently use Elasticsearch v1.1.0 and the client v2.1.0 for development. All unit tests pass.
@@ -44,7 +46,7 @@ sequence.get('post_id', function (id) {
   esClient.index({
     index: 'blog',
     type: 'post',
-    id: id, // <--
+    id: id,        // <--
     body: {
       title: 'JavaScript Everywhere!',
       content: 'It all started when...',
@@ -69,7 +71,6 @@ Initialization to be called **once** during server startup.
   esIndex: 'sequences',
   esType: 'sequence'
 }
-
 ```
 
 Pass the options accordingly to overwrite the defaults. These parameters are used to store and update documents that represent a sequence in the index `esIndex` of document type `esType`.
