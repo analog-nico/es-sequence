@@ -87,7 +87,7 @@ sequence.init(esClient)
     // Add your error handling code here.
   });
 
-// Alternative shorthand provided by Bluebird
+// More expressive alternative provided by Bluebird
 sequence.init(esClient)
   .catch(function (error) {
     // Add your error handling code here.
@@ -110,7 +110,7 @@ sequence.init(esClient)
     }
   });
 
-// Alternative shorthand provided by Bluebird
+// More expressive alternative provided by Bluebird
 sequence.init(esClient)
   .catch(elasticsearch.errors.RequestTimeout, function (error) {
     // Handle RequestTimeout errors here.
@@ -120,7 +120,7 @@ sequence.init(esClient)
   });
 ```
 
-You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and fail itself if the initialization had failed.
+You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and will fail itself if the initialization had failed.
 
 ### sequence.get(sequenceName) -> Promise
 
@@ -128,7 +128,7 @@ Retrieves the next integer of the sequence with the name `sequenceName`. A new s
 
 `sequenceName` can be any string.
 
-Returns a [promise](http://promisesaplus.com). Call `then(...)` to pass a callback that will get the retrieved integer as the first parameter:
+Returns a [promise](http://promisesaplus.com) (implemented by [Bluebird](https://github.com/petkaantonov/bluebird)). Call `then(...)` to pass a callback that will get the retrieved integer as the first parameter:
 ``` js
 sequence.get(sequenceName).then(function (id) {
   // Use the id here
@@ -137,7 +137,29 @@ sequence.get(sequenceName).then(function (id) {
 
 #### Error Handling
 
-Description forthcoming.
+The promise returned by `get` will be rejected if retrieving the id fails for any reason. To handle any error use:
+```js
+// Promises/A+ compliant use
+sequence.get(sequenceName).then(
+  function (id) {
+    // Called on successful id retrieval
+  },
+  function (error) {
+    // Add your error handling code here.
+  }
+);
+
+// More expressive alternative provided by Bluebird
+sequence.get(sequenceName)
+  .then(function (id) {
+    // Called on successful id retrieval
+  })
+  .catch(function (error) {
+    // Add your error handling code here.
+  });
+```
+
+You may also catch specific [errors originating from Elasticsearch](http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/errors.html) as described in the error handling section for `init`.
 
 ## Production Readiness
 
