@@ -6,6 +6,7 @@ var Promise = require('bluebird');
 
 var _client,
     _initPromise = null,
+    _initError = null,
     _cache = {},
     _cacheFillPromise = null,
     _options = { esIndex: 'sequences', esType: 'sequence' },
@@ -40,7 +41,7 @@ function isInjectedClientValid(client) {
   return true;
 }
 
-function ensureEsIndexContainsMapping() {
+function addMappingToEsIndexIfMissing() {
 
   var mapping = {};
   mapping[_options.esType] = _internalOptions.esTypeMapping;
@@ -53,13 +54,13 @@ function ensureEsIndexContainsMapping() {
   });
 }
 
-function ensureEsIndexIsInitialized() {
+function initEsIndexIfNeeded() {
 
   _initPromise = _client.indices.exists({
     index: _options.esIndex
   }).then(function (response) {
     if (response === true) {
-      return ensureEsIndexContainsMapping();
+      return addMappingToEsIndexIfMissing();
     }
 
     var config = _.cloneDeep(_internalOptions.esIndexConfig);
@@ -69,7 +70,12 @@ function ensureEsIndexIsInitialized() {
       index: _options.esIndex,
       body: config
     });
-  }).then(function () {
+  })
+  .catch(function (e) {
+    _initError = e;
+    throw e;
+  })
+  .finally(function () {
     _initPromise = null;
   });
 
@@ -81,18 +87,22 @@ function init(client, options) {
     throw new Error('The parameter value for client is invalid.');
   }
 
+  if (_initPromise !== null) {
+    throw new Error('You cannot call init while a previous init is pending.');
+  }
   if (_cacheFillPromise !== null) {
     throw new Error('You cannot call init while get requests are pending.');
   }
 
   _client = client;
   _cache = {}; // In case init is called multiple times.
+  _initError = null;
 
   if (_.isObject(options)) {
     _.merge(_options, options);
   }
 
-  return ensureEsIndexIsInitialized();
+  return initEsIndexIfNeeded();
 }
 
 function fillCache(sequenceName) {
@@ -115,7 +125,7 @@ function fillCache(sequenceName) {
         _cache[sequenceName].push(response.items[k].index._version);
       }
     })
-    .then(function () {
+    .finally(function () {
       _cacheFillPromise = null;
     });
 
@@ -123,6 +133,10 @@ function fillCache(sequenceName) {
 }
 
 function get(sequenceName) {
+  if (_initError !== null) {
+    return Promise.reject(_initError);
+  }
+
   if (_.isArray(_cache[sequenceName]) && _cache[sequenceName].length > 0) {
     return Promise.resolve(_cache[sequenceName].shift());
   }

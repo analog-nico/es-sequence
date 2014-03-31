@@ -79,23 +79,56 @@ The index is configured by `init` for optimal performance. Thus you must use thi
 
 #### Error Handling
 
-`init` returns a promise which resolves all asynchronous initialization steps. You can use it to handle any errors:
+`init` returns a [promise](http://promisesaplus.com) (implemented by [Bluebird](https://github.com/petkaantonov/bluebird)) which resolves all asynchronous initialization steps. You can use it to handle any errors:
 ``` js
+// Promises/A+ compliant use
+sequence.init(esClient)
+  .then(null, function (error) {
+    // Add your error handling code here.
+  });
+
+// Alternative shorthand provided by Bluebird
 sequence.init(esClient)
   .catch(function (error) {
     // Add your error handling code here.
   });
 ```
 
+You may catch specific [errors originating from Elasticsearch](http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/errors.html) using:
+``` js
+var sequence = require('es-sequence');
+var elasticsearch = require('elasticsearch');
+var esClient = elasticsearch.Client();
+
+// Promises/A+ compliant use
+sequence.init(esClient)
+  .then(null, function (error) {
+    if (error instanceof elasticsearch.errors.RequestTimeout) {
+      // Handle RequestTimeout errors here.
+    } else {
+      // Handle any other errors here.
+    }
+  });
+
+// Alternative shorthand provided by Bluebird
+sequence.init(esClient)
+  .catch(elasticsearch.errors.RequestTimeout, function (error) {
+    // Handle RequestTimeout errors here.
+  })
+  .catch(function (error) {
+    // Handle any other errors here.
+  });
+```
+
 You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and fail itself if the initialization had failed.
 
-### sequence.get(sequenceName)
+### sequence.get(sequenceName) -> Promise
 
 Retrieves the next integer of the sequence with the name `sequenceName`. A new sequence starts with `1`. In two consecutive calls the latter will always get a value higher than the former call. However, both values may differ by more than `1` if a node.js server restart occurred in between.
 
 `sequenceName` can be any string.
 
-Returns a promise. Call `then(...)` to pass a callback that will get the retrieved integer as the first parameter:
+Returns a [promise](http://promisesaplus.com). Call `then(...)` to pass a callback that will get the retrieved integer as the first parameter:
 ``` js
 sequence.get(sequenceName).then(function (id) {
   // Use the id here

@@ -2,20 +2,48 @@
 
 describe('Regarding connectivity, es-sequence', function() {
 
+  var util = require('util');
   var Promise = require('bluebird');
 
+  var sequence = require('..');
   var elasticsearch = require('elasticsearch');
+  var esClientOnline = elasticsearch.Client();
   var esClientOffline = elasticsearch.Client({ host: 'localhost:1234' }); // Wrong port == offline
   var esClientSim = require('./fixtures/es-client.js');
-  var sequence = require('..');
+
+  function takeClientOffline() {
+
+    function throwOffline() {
+      return Promise.resolve().then(function () {
+        throw new Error('Elasticsearch is offline.');
+      });
+    }
+
+    esClientOnline.indices.existsOrig = esClientOnline.indices.exists;
+    esClientOnline.indices.exists = throwOffline;
+
+    esClientOnline.bulkOrig = esClientOnline.bulk;
+    esClientOnline.bulk = throwOffline;
+  }
+
+  function takeClientOnline() {
+    esClientOnline.indices.exists = esClientOnline.indices.existsOrig;
+    esClientOnline.bulk = esClientOnline.bulkOrig;
+  }
+
 
   it('should handle that Elasticsearch is offline', function (done) {
     sequence.init(esClientOffline)
       .then(function () {
         done(new Error('The init promise was not rejected.'));
       })
-      .catch(function (e) {
+      .catch(elasticsearch.errors.NoConnections, function (e) {
+        // Just to double check both approaches to check for a specific error type.
+        expect(e instanceof elasticsearch.errors.NoConnections).toBe(true);
         done();
+      })
+      .catch(function (e) {
+        done(new Error('Init threw an error of an unexpected type: ' + e.message));
       });
   });
 
@@ -77,7 +105,63 @@ describe('Regarding connectivity, es-sequence', function() {
       });
   });
 
-  it('should accept the elasticsearch client simulator', function (done) {
+  it('should handle Elasticsearch getting offline after init and before first get', function (done) {
+    var err;
+    sequence.init(esClientOnline)
+        .catch(function (e) {
+          done(new Error('Init should not have failed.'));
+        })
+        .then(takeClientOffline)
+        .then(function () {
+          return sequence.get('test')
+              .then(function () {
+                done(new Error('The get promise was not rejected.'));
+              })
+              .catch(function (e) {
+                err = e;
+              });
+        })
+        .finally(function () {
+          expect(err).toBeDefined();
+          takeClientOnline();
+          done();
+        });
+  });
+
+  it('should handle Elasticsearch getting offline after first get and before second get', function (done) {
+    var err;
+    sequence.init(esClientOnline)
+        .catch(function (e) {
+          done(new Error('Init should not have failed.'));
+        })
+        .then(function () {
+          return sequence.get('test')
+            .catch(function (e) {
+              done(new Error('The first get should not have failed.'));
+            });
+        })
+        .then(takeClientOffline)
+        .then(function () {
+          return sequence.get('testWithEmptyCache')
+              .then(function () {
+                done(new Error('The get promise was not rejected.'));
+              })
+              .catch(function (e) {
+                err = e;
+              });
+        })
+        .finally(function () {
+          expect(err).toBeDefined();
+          takeClientOnline();
+          done();
+        });
+  });
+
+  xit('should handle Elasticsearch getting offline after init and before first deferred get', function (done) {
+
+  });
+
+  xit('should accept the elasticsearch client simulator', function (done) {
     expect(function () {
       sequence.init(esClientSim);
     }).not.toThrow();
