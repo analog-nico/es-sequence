@@ -1,6 +1,6 @@
 {
   "name": "es-sequence",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used to set the id of new documents.",
   "main": "index.js",
   "scripts": {

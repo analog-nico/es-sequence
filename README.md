@@ -137,7 +137,7 @@ sequence.get(sequenceName).then(function (id) {
 
 #### Error Handling
 
-The promise returned by `get` will be rejected if retrieving the id fails for any reason. To handle any error use:
+The promise returned by `get` will be rejected if retrieving the integer fails for any reason. To handle any error use:
 ```js
 // Promises/A+ compliant use
 sequence.get(sequenceName).then(
