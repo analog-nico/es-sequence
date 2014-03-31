@@ -3,6 +3,17 @@
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    run: {
+      // 'jasmine-node' needs to run in a separate task because the coverage report is created when grunt exits.
+      // When we use watch grunt keeps running and no report would be generated if 'jasmine-node' would be executed directly.
+      jasmine_node: {
+        cmd: 'node_modules/.bin/grunt',
+        args: ['jasmine_node']
+      }
+    },
+    clean: {
+      all: 'coverage'
+    },
     jshint: {
       all: [
         'Gruntfile.js',
@@ -14,10 +25,13 @@ module.exports = function (grunt) {
       }
     },
     jasmine_node: {
-      options: {
-        matchall: true
+      coverage: {
+        excludes: ['test/**', 'coverage/**', 'Gruntfile.js']
       },
-      all: ['test/']
+      options: {
+        matchall: true,
+        specFolders: ['test/']
+      }
     },
     watch: {
       js: {
@@ -30,10 +44,12 @@ module.exports = function (grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-run');
+  grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-jasmine-node');
+  grunt.loadNpmTasks('grunt-jasmine-node-coverage');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.registerTask('test', ['jshint', 'jasmine_node', 'watch']);
-  grunt.registerTask('ci', ['jshint', 'jasmine_node']);
+  grunt.registerTask('test', ['clean', 'jshint', 'run:jasmine_node', 'watch']);
+  grunt.registerTask('ci', ['clean', 'jshint', 'jasmine_node']);
   grunt.registerTask('default', ['test']);
 };
