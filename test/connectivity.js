@@ -15,7 +15,7 @@ describe('Regarding connectivity, es-sequence', function() {
 
     function throwOffline() {
       return Promise.resolve().then(function () {
-        throw new Error('Elasticsearch is offline.');
+        throw new elasticsearch.errors.NoConnections();
       });
     }
 
@@ -142,7 +142,8 @@ describe('Regarding connectivity, es-sequence', function() {
         })
         .then(takeClientOffline)
         .then(function () {
-          return sequence.get('testWithEmptyCache')
+          expect(sequence._internal.getCacheSize('test2')).toBe(0);
+          return sequence.get('test2')
               .then(function () {
                 done(new Error('The get promise was not rejected.'));
               })

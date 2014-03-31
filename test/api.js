@@ -136,36 +136,50 @@ describe('The es-sequence API', function() {
 
   it('should be able to retrieve a thousand ids from a sequence', function (done) {
 
-    function getNextId(lastId, i, done) {
-      sequence.get("userId")
-        .then(function (id) {
-          expect(id).toBe(lastId+1);
-          if (i < 1000) {
-            getNextId(id, i+1, done);
-          } else {
-            done();
-          }
-        });
+    var count = 1000;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        done();
+      }
     }
 
-    getNextId(3, 0, done);
+    function executeGet(expectedValue) {
+      sequence.get("userId")
+          .then(function (id) {
+            expect(id).toBe(expectedValue);
+            countdown();
+          });
+    }
+
+    for ( var i = 0; i < 1000; i+=1 ) {
+      executeGet(i+1+3);
+    }
+
   });
 
   it('should keep different sequences separate even after cache refreshes', function (done) {
 
-    function getNextId(lastId, i, done) {
-      sequence.get("anotherId")
-        .then(function (id) {
-          expect(id).toBe(lastId+1);
-          if (i < 1000) {
-            getNextId(id, i+1, done);
-          } else {
-            done();
-          }
-        });
+    var count = 300;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        done();
+      }
     }
 
-    getNextId(1, 0, done);
+    function executeGet(expectedValue) {
+      sequence.get("anotherId")
+          .then(function (id) {
+            expect(id).toBe(expectedValue);
+            countdown();
+          });
+    }
+
+    for ( var i = 0; i < 300; i+=1 ) {
+      executeGet(i+1+1);
+    }
+
   });
 
   it('should reinit with same options', function (done) {
@@ -174,8 +188,8 @@ describe('The es-sequence API', function() {
 
     sequence.get("anotherId")
       .then(function (id) {
-        // 1001 retrieved ids + 99 discarded ids in cache
-        expect(id).toBeGreaterThan(1 + 1000 + 99);
+        // 301 retrieved ids + 99 discarded ids in cache
+        expect(id).toBeGreaterThan(1 + 300 + 99);
         done();
       });
   });
@@ -202,7 +216,7 @@ describe('The es-sequence API', function() {
     sequence.get("^°!\"§$%&/()=?*+'#-_.:,;<>|\\…÷∞˛~›˘∫‹√◊≈‡≤≥‘’@ﬂ∆ˆºıªƒ∂‚•π∏⁄Ω†€‰∑¿˙≠{}·˜][ﬁ“”„“ ¡¢£¤¥¦§¨©ª«¬®¯°±²³´`µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖŒ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøœùúûüýþÿ™")
       .then(function (id) {
         expect(id).toBe(lastId+1);
-        if (i < 1000) {
+        if (i < 300) {
           getNextId(id, i+1, done);
         } else {
           done();
@@ -218,7 +232,7 @@ describe('The es-sequence API', function() {
     // Intercept the bulk method which is used to get new ids so it takes longer
     var bulkOrig = esClient.bulk;
     esClient.bulk = function() {
-      return bulkOrig.apply(this, arguments).delay(100);
+      return bulkOrig.apply(this, arguments).delay(50);
     };
 
     var count = 3;
@@ -256,8 +270,14 @@ describe('The es-sequence API', function() {
 
     // Intercept the bulk method which is used to get new ids so it takes longer
     var bulkOrig = esClient.bulk;
+    var firstBulk = true;
     esClient.bulk = function() {
-      return bulkOrig.apply(this, arguments).delay(100);
+      var ret = bulkOrig.apply(this, arguments);
+      if (firstBulk === 0) {
+        ret = ret.delay(50);
+        firstBulk = false;
+      }
+      return ret;
     };
 
     var count = 1000;
