@@ -70,6 +70,7 @@ module.exports = function (grunt) {
   // 'jasmine-node' needs to run in a separate task because the coverage report is created when grunt exits.
   // When we use watch grunt keeps running and no report would be generated if 'jasmine-node' would be executed directly.
   grunt.registerTask('test', ['clean', 'jshint', 'run:jasmine_node_with_coverage', 'watch']);
+  grunt.registerTask('test_no_coverage', ['clean', 'jshint', 'jasmine_node_no_coverage', 'watch']);
 
   // 'jasmine-node' needs to run in a separate task the second time it is executed so that es-sequence freshly required.
   // The unit tests assume that es-sequence is not initialized in the beginning.

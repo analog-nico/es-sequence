@@ -9,6 +9,16 @@ describe('The es-sequence API', function() {
   var sequence = require('..');
 
 
+  function expectError(promise, done) {
+    promise
+      .then(function () {
+        done(new Error('The get promise was not rejected.'));
+      })
+      .catch(function (e) {
+        done();
+      });
+  }
+
   function expectIndexToExist(name, expectedToExist, done) {
     esClient.indices.exists({
       index: name
@@ -59,12 +69,25 @@ describe('The es-sequence API', function() {
 
 
   it('should throw invalid parameters for init', function (done) {
-    expect(function () { sequence.init();               }).toThrow();
-    expect(function () { sequence.init(undefined);      }).toThrow();
-    expect(function () { sequence.init(null);           }).toThrow();
-    expect(function () { sequence.init({});             }).toThrow();
-    expect(function () { sequence.init(function () {}); }).toThrow();
-    done();
+
+    var count = 5;
+    function countdown(error) {
+      if (error) {
+        done(error);
+      }
+      count -= 1;
+      if (count === 0) {
+        done();
+      }
+    }
+
+    expectError(sequence.init(), countdown);
+    expectError(sequence.init(undefined), countdown);
+    expectError(sequence.init(null), countdown);
+    expectError(sequence.init({}), countdown);
+    expectError(sequence.init({ indices: null }), countdown);
+    expectError(sequence.init(function () {}), countdown);
+
   });
 
   it('should throw missing init', function (done) {
@@ -84,13 +107,13 @@ describe('The es-sequence API', function() {
     expectIndexToExist('testsequences', false, function () {
 
       sequence.init(esClient, { esIndex: 'testsequences' })
-          .then(function () {
-            expectIndexToExist('testsequences', true, function () {
-              expectIndexToHaveCorrectSettings('testsequences', function () {
-                expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
-              });
+        .then(function () {
+          expectIndexToExist('testsequences', true, function () {
+            expectIndexToHaveCorrectSettings('testsequences', function () {
+              expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
             });
           });
+        });
     });
   });
 
@@ -313,7 +336,10 @@ describe('The es-sequence API', function() {
     };
 
     var count = 2;
-    function countdown() {
+    function countdown(error) {
+      if (error) {
+        done(error);
+      }
       count -= 1;
       if (count === 0) {
         esClient.bulk = bulkOrig;
@@ -326,12 +352,12 @@ describe('The es-sequence API', function() {
         expect(id).toBe(1);
         expect(count).toBe(1); // Finished last
         countdown();
+      })
+      .catch(function (e) {
+        countdown(new Error('Get should not have failed: ' + e.message));
       });
 
-    expect(function () {
-      sequence.init(esClient);
-    }).toThrow();
-    countdown();
+    expectError(sequence.init(esClient), countdown);
 
   });
 

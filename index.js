@@ -29,8 +29,8 @@ var _client,
 
 function isInjectedClientValid(client) {
 
-  if (_.isUndefined(client) ||
-      _.isUndefined(client.indices) ||
+  if ((_.isObject(client) === false && _.isFunction(client) === false) ||
+      (_.isObject(client.indices) === false && _.isFunction(client.indices) === false) ||
       _.isFunction(client.indices.create) === false ||
       _.isFunction(client.indices.exists) === false ||
       _.isFunction(client.indices.putMapping) === false ||
@@ -52,13 +52,15 @@ function addMappingToEsIndexIfMissing() {
     ignore_conflicts: true,
     body: mapping
   });
+
 }
 
 function initEsIndexIfNeeded() {
 
-  _initPromise = _client.indices.exists({
+  return _client.indices.exists({
     index: _options.esIndex
   }).then(function (response) {
+
     if (response === true) {
       return addMappingToEsIndexIfMissing();
     }
@@ -70,6 +72,40 @@ function initEsIndexIfNeeded() {
       index: _options.esIndex,
       body: config
     });
+
+  });
+
+}
+
+function init(client, options) {
+
+  // The following checks are done before the init promise is created
+  // because errors thrown in the init promise are stored in _initError.
+  // If a check fails it should look as if init was not called.
+
+  if (isInjectedClientValid(client) === false) {
+    return Promise.reject(new Error('Init was called with an invalid client parameter value.'));
+  }
+
+  if (_initPromise !== null) {
+    return Promise.reject(new Error('Init was called while a previous init is pending.'));
+  }
+  if (_cacheFillPromise !== null) {
+    return Promise.reject(new Error('Init was called while get requests are pending.'));
+  }
+
+  _initPromise = new Promise(function (resolve) {
+
+    _client = client;
+    _cache = {}; // In case init is called multiple times.
+    _initError = null;
+
+    if (_.isObject(options)) {
+      _.merge(_options, options);
+    }
+
+    resolve(initEsIndexIfNeeded());
+
   })
   .catch(function (e) {
     _initError = e;
@@ -80,56 +116,42 @@ function initEsIndexIfNeeded() {
   });
 
   return _initPromise;
-}
 
-function init(client, options) {
-  if (isInjectedClientValid(client) === false) {
-    throw new Error('The parameter value for client is invalid.');
-  }
-
-  if (_initPromise !== null) {
-    throw new Error('You cannot call init while a previous init is pending.');
-  }
-  if (_cacheFillPromise !== null) {
-    throw new Error('You cannot call init while get requests are pending.');
-  }
-
-  _client = client;
-  _cache = {}; // In case init is called multiple times.
-  _initError = null;
-
-  if (_.isObject(options)) {
-    _.merge(_options, options);
-  }
-
-  return initEsIndexIfNeeded();
 }
 
 function fillCache(sequenceName) {
-  if (_.isArray(_cache[sequenceName]) === false) {
-    _cache[sequenceName] = [];
-  }
 
-  var bulkParams = { body: [] };
-  for ( var i = 0; i < 100; i+=1 ) {
-    // Action
-    bulkParams.body.push({ index: { _index: _options.esIndex, _type: _options.esType, _id: sequenceName } });
-    // Empty document
-    bulkParams.body.push({});
-  }
+  _cacheFillPromise = new Promise(function (resolve) {
 
-  _cacheFillPromise = _client.bulk(bulkParams)
-    .then(function (response) {
-      for ( var k = 0; k < response.items.length; k+=1 ) {
-        // This is the core trick: The document's version is an auto-incrementing integer.
-        _cache[sequenceName].push(response.items[k].index._version);
-      }
-    })
-    .finally(function () {
-      _cacheFillPromise = null;
-    });
+    if (_.isArray(_cache[sequenceName]) === false) {
+      _cache[sequenceName] = [];
+    }
+
+    var bulkParams = { body: [] };
+    for ( var i = 0; i < 100; i+=1 ) {
+      // Action
+      bulkParams.body.push({ index: { _index: _options.esIndex, _type: _options.esType, _id: sequenceName } });
+      // Empty document
+      bulkParams.body.push({});
+    }
+
+    resolve(
+      _client.bulk(bulkParams)
+        .then(function (response) {
+          for ( var k = 0; k < response.items.length; k+=1 ) {
+            // This is the core trick: The document's version is an auto-incrementing integer.
+            _cache[sequenceName].push(response.items[k].index._version);
+          }
+        })
+    );
+
+  })
+  .finally(function () {
+    _cacheFillPromise = null;
+  });
 
   return _cacheFillPromise;
+
 }
 
 function get(sequenceName) {

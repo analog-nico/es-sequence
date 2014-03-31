@@ -131,34 +131,58 @@ describe('Regarding connectivity, es-sequence', function() {
   it('should handle Elasticsearch getting offline after first get and before second get', function (done) {
     var err;
     sequence.init(esClientOnline)
-        .catch(function (e) {
-          done(new Error('Init should not have failed.'));
-        })
-        .then(function () {
-          return sequence.get('test')
-            .catch(function (e) {
-              done(new Error('The first get should not have failed.'));
-            });
-        })
-        .then(takeClientOffline)
-        .then(function () {
-          expect(sequence._internal.getCacheSize('test2')).toBe(0);
-          return sequence.get('test2')
-              .then(function () {
-                done(new Error('The get promise was not rejected.'));
-              })
-              .catch(function (e) {
-                err = e;
-              });
-        })
-        .finally(function () {
-          expect(err).toBeDefined();
-          takeClientOnline();
-          done();
-        });
+      .catch(function (e) {
+        done(new Error('Init should not have failed.'));
+      })
+      .then(function () {
+        return sequence.get('test')
+          .catch(function (e) {
+            done(new Error('The first get should not have failed.'));
+          });
+      })
+      .then(takeClientOffline)
+      .then(function () {
+        expect(sequence._internal.getCacheSize('test2')).toBe(0);
+        return sequence.get('test2')
+          .then(function () {
+            done(new Error('The get promise was not rejected.'));
+          })
+          .catch(function (e) {
+            err = e;
+          });
+      })
+      .finally(function () {
+        expect(err).toBeDefined();
+        takeClientOnline();
+        done();
+      });
   });
 
-  xit('should handle Elasticsearch getting offline after init and before first deferred get', function (done) {
+  it('should handle Elasticsearch getting offline after init and before first deferred get', function (done) {
+
+    var count = 2;
+    function countdown() {
+      count -= 1;
+      if (count === 0) {
+        done();
+      }
+    }
+
+    sequence.init(esClientOnline)
+      .then(function () {
+        takeClientOffline();
+        countdown();
+      });
+
+    sequence.get('test')
+      .then(function () {
+        done(new Error('The get promise was not rejected.'));
+      })
+      .catch(function (e) {
+        expect(count).toBe(1); // Finished last
+        takeClientOnline();
+        countdown();
+      });
 
   });
 
