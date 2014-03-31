@@ -30,7 +30,8 @@ module.exports = function (grunt) {
       },
       options: {
         matchall: true,
-        specFolders: ['test/']
+        specFolders: ['test/'],
+        isVerbose: true
       }
     },
     watch: {
