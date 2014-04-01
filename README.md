@@ -178,3 +178,7 @@ $ npm uninstall elasticsearch
 $ npm install elasticsearch@<your version of choice>
 $ grunt ci
 ```
+
+---
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/analog-nico/es-sequence/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
