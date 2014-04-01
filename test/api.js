@@ -4,68 +4,10 @@ describe('The es-sequence API', function() {
 
   var util = require('util');
   var Promise = require('bluebird');
+  var helpers = require('./fixtures/helpers.js');
 
   var esClient = require('elasticsearch').Client();
   var sequence = require('..');
-
-
-  function expectError(promise, done) {
-    promise
-      .then(function () {
-        done(new Error('The get promise was not rejected.'));
-      })
-      .catch(function (e) {
-        done();
-      });
-  }
-
-  function expectIndexToExist(name, expectedToExist, done) {
-    esClient.indices.exists({
-      index: name
-    }, function (err, response, status) {
-      expect(err).toBeUndefined();
-      expect(response).toBe(expectedToExist);
-      done();
-    });
-  }
-
-  function expectIndexToHaveCorrectSettings(name, done) {
-    esClient.indices.getSettings({
-      index: name
-    }, function (err, response, status) {
-      expect(err).toBeUndefined();
-      console.log(util.inspect(response, { showHidden: true, depth: null }));
-      expect(response).toBeDefined();
-      expect(response[name]).toBeDefined();
-      expect(response[name].settings).toBeDefined();
-      expect(response[name].settings.index).toBeDefined();
-      expect(response[name].settings.index.auto_expand_replicas).toEqual("0-all");
-      expect(response[name].settings.index.number_of_shards).toEqual("1");
-      done();
-    });
-  }
-
-  function expectIndexToHaveCorrectMappingForType(nameIndex, nameType, done) {
-    esClient.indices.getMapping({
-      index: nameIndex,
-      type: nameType
-    }, function (err, response, status) {
-      expect(err).toBeUndefined();
-      console.log(util.inspect(response, { showHidden: true, depth: null }));
-      expect(response).toBeDefined();
-      expect(response[nameIndex]).toBeDefined();
-      expect(response[nameIndex].mappings).toBeDefined();
-      expect(response[nameIndex].mappings[nameType]).toBeDefined();
-      expect(response[nameIndex].mappings[nameType]._source).toBeDefined();
-      expect(response[nameIndex].mappings[nameType]._source.enabled).toBe(false);
-      expect(response[nameIndex].mappings[nameType]._all).toBeDefined();
-      expect(response[nameIndex].mappings[nameType]._all.enabled).toBe(false);
-      expect(response[nameIndex].mappings[nameType]._type).toBeDefined();
-      expect(response[nameIndex].mappings[nameType]._type.index).toEqual('no');
-      expect(response[nameIndex].mappings[nameType].enabled).toBe(false);
-      done();
-    });
-  }
 
 
   it('should throw invalid parameters for init', function (done) {
@@ -81,12 +23,12 @@ describe('The es-sequence API', function() {
       }
     }
 
-    expectError(sequence.init(), countdown);
-    expectError(sequence.init(undefined), countdown);
-    expectError(sequence.init(null), countdown);
-    expectError(sequence.init({}), countdown);
-    expectError(sequence.init({ indices: null }), countdown);
-    expectError(sequence.init(function () {}), countdown);
+    helpers.expectError(sequence.init(), countdown);
+    helpers.expectError(sequence.init(undefined), countdown);
+    helpers.expectError(sequence.init(null), countdown);
+    helpers.expectError(sequence.init({}), countdown);
+    helpers.expectError(sequence.init({ indices: null }), countdown);
+    helpers.expectError(sequence.init(function () {}), countdown);
 
   });
 
@@ -99,18 +41,18 @@ describe('The es-sequence API', function() {
     // I do not expect the default "sequences" index not to be existing to be able to execute the tests on my test db.
     sequence.init(esClient)
       .then(function () {
-        expectIndexToExist('sequences', true, done);
+          helpers.expectIndexToExist(esClient, 'sequences', true, done);
       });
   });
 
   it('should init with options for a new index', function (done) {
-    expectIndexToExist('testsequences', false, function () {
+    helpers.expectIndexToExist(esClient, 'testsequences', false, function () {
 
       sequence.init(esClient, { esIndex: 'testsequences' })
         .then(function () {
-          expectIndexToExist('testsequences', true, function () {
-            expectIndexToHaveCorrectSettings('testsequences', function () {
-              expectIndexToHaveCorrectMappingForType('testsequences', 'sequence', done);
+          helpers.expectIndexToExist(esClient, 'testsequences', true, function () {
+            helpers.expectIndexToHaveCorrectSettings(esClient, 'testsequences', function () {
+              helpers.expectIndexToHaveCorrectMappingForType(esClient, 'testsequences', 'sequence', done);
             });
           });
         });
@@ -221,7 +163,7 @@ describe('The es-sequence API', function() {
 
     sequence.init(esClient, { esType: 'sequence2' })
       .then(function () {
-        expectIndexToHaveCorrectMappingForType('testsequences', 'sequence2', done);
+        helpers.expectIndexToHaveCorrectMappingForType(esClient, 'testsequences', 'sequence2', done);
       });
   });
 
@@ -357,7 +299,7 @@ describe('The es-sequence API', function() {
         countdown(new Error('Get should not have failed: ' + e.message));
       });
 
-    expectError(sequence.init(esClient), countdown);
+    helpers.expectError(sequence.init(esClient), countdown);
 
   });
 
@@ -384,9 +326,9 @@ describe('The es-sequence API', function() {
     sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence' })
       .then(function () {
         countdown();
-        expectIndexToExist('testsequences2', true, function () {
-          expectIndexToHaveCorrectSettings('testsequences2', function () {
-            expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence', countdown);
+        helpers.expectIndexToExist(esClient, 'testsequences2', true, function () {
+          helpers.expectIndexToHaveCorrectSettings(esClient, 'testsequences2', function () {
+            helpers.expectIndexToHaveCorrectMappingForType(esClient, 'testsequences2', 'sequence', countdown);
           });
         });
       });
@@ -423,9 +365,9 @@ describe('The es-sequence API', function() {
     sequence.init(esClient, { esIndex: 'testsequences2', esType: 'sequence2' })
       .then(function () {
         countdown();
-        expectIndexToExist('testsequences2', true, function () {
-          expectIndexToHaveCorrectSettings('testsequences2', function () {
-            expectIndexToHaveCorrectMappingForType('testsequences2', 'sequence2', countdown);
+        helpers.expectIndexToExist(esClient, 'testsequences2', true, function () {
+          helpers.expectIndexToHaveCorrectSettings(esClient, 'testsequences2', function () {
+            helpers.expectIndexToHaveCorrectMappingForType(esClient, 'testsequences2', 'sequence2', countdown);
           });
         });
       });

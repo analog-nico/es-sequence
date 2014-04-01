@@ -4,6 +4,7 @@ describe('Regarding connectivity, es-sequence', function() {
 
   var util = require('util');
   var Promise = require('bluebird');
+  var helpers = require('./fixtures/helpers.js');
 
   var sequence = require('..');
   var elasticsearch = require('elasticsearch');
@@ -105,6 +106,28 @@ describe('Regarding connectivity, es-sequence', function() {
       });
   });
 
+  it('should allow reinit after first failed init', function (done) {
+    takeClientOffline();
+    sequence.init(esClientOnline, { esIndex: 'testsequences3' })
+        .catch(function () {
+          takeClientOnline();
+          return sequence.init(esClientOnline);
+        })
+        .then(function () {
+          return new Promise(function (resolve) {
+            // Second init should use options of previous call since no options were passed to it.
+            helpers.expectIndexToExist(esClientOnline, 'testsequences3', true, resolve);
+          });
+        })
+        .then(function () {
+          return sequence.get('firstId');
+        })
+        .then(function (id) {
+          expect(id).toBe(1);
+          done();
+        });
+  });
+
   it('should handle Elasticsearch getting offline after init and before first get', function (done) {
     var err;
     sequence.init(esClientOnline)
@@ -191,6 +214,10 @@ describe('Regarding connectivity, es-sequence', function() {
       sequence.init(esClientSim);
     }).not.toThrow();
     done();
+  });
+
+  it('cleanup index testsequences3', function (done) {
+    esClientOnline.indices.delete({ index: 'testsequences3' }, done);
   });
 
 });
