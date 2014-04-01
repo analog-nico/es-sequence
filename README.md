@@ -59,7 +59,7 @@ sequence.get('post_id').then(function (id) {
 
 ## API
 
-### sequence.init(client, [options])
+### sequence.init(client, [options]) -> Promise
 
 Initialization should be called **once** during server startup.
 
@@ -120,7 +120,7 @@ sequence.init(esClient)
   });
 ```
 
-You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and will fail itself if the initialization had failed.
+You can choose to ignore the promise. Any early `get` call will be deferred until the initialization finishes and will fail itself if the initialization had failed. However, I recommend to handle a failure of `init` during server startup before the server starts accepting incoming requests. Then you may call `init` again without conflicting with pending `get` requests (assuming you don't call `get` during server startup).
 
 ### sequence.get(sequenceName) -> Promise
 
