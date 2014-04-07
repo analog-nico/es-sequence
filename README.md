@@ -65,7 +65,7 @@ sequence.get('post_id').then(function (id) {
 
 Initialization should be called **once** during server startup.
 
-`client` must be a client instance of the [official Elasticsearch client library](https://github.com/elasticsearch/elasticsearch-js). It is used to set up sequences the first time they are requested through `get` and to retrieve new ids.
+`client` must be a client instance of the [official Elasticsearch client library](https://github.com/elasticsearch/elasticsearch-js). It is used to set up sequences the first time they are requested and to retrieve new ids through `get`.
 
 `options` default to:
 ``` js
@@ -180,7 +180,3 @@ $ npm uninstall elasticsearch
 $ npm install elasticsearch@<your version of choice>
 $ grunt ci
 ```
-
----
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/analog-nico/es-sequence/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
