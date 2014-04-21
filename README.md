@@ -61,6 +61,8 @@ sequence.get('post_id').then(function (id) {
 
 [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
+The API is in the process of settling, but has not yet had sufficient real-world testing to be considered stable. Backwards-compatibility will be maintained if reasonable.
+
 ### sequence.init(client, [options]) -> Promise
 
 Initialization should be called **once** during server startup.
