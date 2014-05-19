@@ -1,18 +1,12 @@
 # Elasticsearch Sequence
 
-[![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence) [![Coverage Status](https://img.shields.io/coveralls/analog-nico/es-sequence.svg)](https://coveralls.io/r/analog-nico/es-sequence) [![Dependency Status](https://david-dm.org/analog-nico/es-sequence.svg)](https://david-dm.org/analog-nico/es-sequence) [![Code Climate](https://codeclimate.com/github/analog-nico/es-sequence.png)](https://codeclimate.com/github/analog-nico/es-sequence)
+[![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence) [![Coverage Status](https://img.shields.io/coveralls/analog-nico/es-sequence.svg)](https://coveralls.io/r/analog-nico/es-sequence?branch=master) [![Dependency Status](https://david-dm.org/analog-nico/es-sequence.svg)](https://david-dm.org/analog-nico/es-sequence) [![Code Climate](https://codeclimate.com/github/analog-nico/es-sequence.png)](https://codeclimate.com/github/analog-nico/es-sequence)
 
 `es-sequence` is a Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used to set the id of new documents.
 
 The sequences are persisted by the Elasticsearch cluster which makes them the last missing feature that maybe prevented you from using Elasticsearch as the sole database in your server stack.
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
-
----
-
-2014-03-30, **Note on the failing build**: Travis CI currently provides Elasticsearch v0.90.10 which is incompatible with the latest Elasticsearch client. I could use an earlier version of the client but then also some checks in the unit tests need to be changed. So I will wait until Travis CI upgrades to Elasticsearch v1.1.
-
-I currently use Elasticsearch v1.1.0 and the client v2.1.0 for development. All unit tests pass.
 
 ## Installation
 
