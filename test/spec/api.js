@@ -4,10 +4,10 @@ describe('The es-sequence API', function() {
 
   var util = require('util');
   var Promise = require('bluebird');
-  var helpers = require('./fixtures/helpers.js');
+  var helpers = require('./../fixtures/helpers.js');
 
   var esClient = require('elasticsearch').Client();
-  var sequence = require('..');
+  var sequence = require('../../index.js');
 
 
   it('should throw invalid parameters for init', function (done) {

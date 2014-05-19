@@ -22,27 +22,32 @@ module.exports = function (grunt) {
         jshintrc: '.jshintrc'
       }
     },
+    jasmine_node_no_coverage: {
+      coverage: false,
+      options: {
+        matchall: true,
+        specFolders: ['test/spec/'],
+        isVerbose: true
+      }
+    },
     jasmine_node_with_coverage: {
       coverage: {
         excludes: ['test/**', 'coverage/**', 'Gruntfile.js']
       },
       options: {
         matchall: true,
-        specFolders: ['test/'],
+        specFolders: ['test/spec/'],
         isVerbose: true
       }
     },
-    jasmine_node_no_coverage: {
-      coverage: false,
-      options: {
-        matchall: true,
-        specFolders: ['test/'],
-        isVerbose: true
+    coveralls: {
+      all: {
+        src: './coverage/lcov.info'
       }
     },
     watch: {
       js: {
-        files: ['**/*.js', '!node_modules/**/*.js'],
+        files: ['**/*.js', '!node_modules/**/*.js', '!coverage/**/*.js'],
         tasks: ['default'],
         options: {
           spawn: true // Since livereload seems not to be working we spawn to require the latest index.js
@@ -55,15 +60,16 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jasmine-node-coverage');
+  grunt.loadNpmTasks('grunt-coveralls');
   grunt.loadNpmTasks('grunt-contrib-watch');
-
-  grunt.registerTask('jasmine_node_with_coverage', 'Unit testing with coverage report', function () {
-    grunt.config.set('jasmine_node', grunt.config.get('jasmine_node_with_coverage'));
-    grunt.task.run('jasmine_node');
-  });
 
   grunt.registerTask('jasmine_node_no_coverage', 'Just unit testing', function () {
     grunt.config.set('jasmine_node', grunt.config.get('jasmine_node_no_coverage'));
+    grunt.task.run('jasmine_node');
+  });
+
+  grunt.registerTask('jasmine_node_with_coverage', 'Unit testing with coverage report', function () {
+    grunt.config.set('jasmine_node', grunt.config.get('jasmine_node_with_coverage'));
     grunt.task.run('jasmine_node');
   });
 
@@ -74,7 +80,7 @@ module.exports = function (grunt) {
 
   // 'jasmine-node' needs to run in a separate task the second time it is executed so that es-sequence freshly required.
   // The unit tests assume that es-sequence is not initialized in the beginning.
-  grunt.registerTask('ci', ['clean', 'jshint', 'jasmine_node_no_coverage', 'run:jasmine_node_with_coverage']);
+  grunt.registerTask('ci', ['clean', 'jshint', 'jasmine_node_no_coverage', 'run:jasmine_node_with_coverage', 'coveralls']);
 
   grunt.registerTask('default', ['test']);
 };

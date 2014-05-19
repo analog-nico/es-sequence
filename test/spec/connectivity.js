@@ -4,13 +4,13 @@ describe('Regarding connectivity, es-sequence', function() {
 
   var util = require('util');
   var Promise = require('bluebird');
-  var helpers = require('./fixtures/helpers.js');
+  var helpers = require('./../fixtures/helpers.js');
 
-  var sequence = require('..');
+  var sequence = require('../../index.js');
   var elasticsearch = require('elasticsearch');
   var esClientOnline = elasticsearch.Client();
   var esClientOffline = elasticsearch.Client({ host: 'localhost:1234' }); // Wrong port == offline
-  var esClientSim = require('./fixtures/es-client.js');
+  var esClientSim = require('./../fixtures/es-client.js');
 
   function takeClientOffline() {
 
