@@ -33,6 +33,11 @@ describe('Regarding connectivity, es-sequence', function() {
   }
 
 
+  beforeEach(function () {
+    console.log('Running: Regarding connectivity, es-sequence ' + jasmine.getEnv().currentSpec.description);
+  });
+
+
   it('should handle that Elasticsearch is offline', function (done) {
     sequence.init(esClientOffline)
       .then(function () {

@@ -10,6 +10,11 @@ describe('The es-sequence API', function() {
   var sequence = require('../../index.js');
 
 
+  beforeEach(function () {
+    console.log('Running: The es-sequence API ' + jasmine.getEnv().currentSpec.description);
+  });
+
+
   it('should throw invalid parameters for init', function (done) {
 
     var count = 5;
