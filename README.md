@@ -176,3 +176,10 @@ $ npm uninstall elasticsearch
 $ npm install elasticsearch@<your version of choice>
 $ grunt ci
 ```
+
+## Change History
+
+- v0.2.1 (2014-08-05)
+	- Updated dependencies
+- v0.2.0
+	- First notable version with a satisfactory API
