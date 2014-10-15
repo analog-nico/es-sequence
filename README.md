@@ -179,6 +179,8 @@ $ grunt ci
 
 ## Change History
 
+- v0.2.2 (2014-10-15)
+  - Updated dependencies
 - v0.2.1 (2014-08-05)
 	- Updated dependencies
 - v0.2.0
