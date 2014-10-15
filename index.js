@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
-var Promise = require('bluebird');
+var BPromise = require('bluebird');
 
 
 var _client,
@@ -84,17 +84,17 @@ function init(client, options) {
   // If a check fails it should look as if init was not called.
 
   if (isInjectedClientValid(client) === false) {
-    return Promise.reject(new Error('Init was called with an invalid client parameter value.'));
+    return BPromise.reject(new Error('Init was called with an invalid client parameter value.'));
   }
 
   if (_initPromise !== null) {
-    return Promise.reject(new Error('Init was called while a previous init is pending.'));
+    return BPromise.reject(new Error('Init was called while a previous init is pending.'));
   }
   if (_cacheFillPromise !== null) {
-    return Promise.reject(new Error('Init was called while get requests are pending.'));
+    return BPromise.reject(new Error('Init was called while get requests are pending.'));
   }
 
-  _initPromise = new Promise(function (resolve) {
+  _initPromise = new BPromise(function (resolve) {
 
     _client = client;
     _cache = {}; // In case init is called multiple times.
@@ -121,7 +121,7 @@ function init(client, options) {
 
 function fillCache(sequenceName) {
 
-  _cacheFillPromise = new Promise(function (resolve) {
+  _cacheFillPromise = new BPromise(function (resolve) {
 
     if (_.isArray(_cache[sequenceName]) === false) {
       _cache[sequenceName] = [];
@@ -156,11 +156,11 @@ function fillCache(sequenceName) {
 
 function get(sequenceName) {
   if (_initError !== null) {
-    return Promise.reject(_initError);
+    return BPromise.reject(_initError);
   }
 
   if (_.isArray(_cache[sequenceName]) && _cache[sequenceName].length > 0) {
-    return Promise.resolve(_cache[sequenceName].shift());
+    return BPromise.resolve(_cache[sequenceName].shift());
   }
 
   function returnValue() {

@@ -1,6 +1,6 @@
 'use strict';
 
-var Promise = require('bluebird');
+var BPromise = require('bluebird');
 
 
 function indexCreate() {
@@ -8,7 +8,7 @@ function indexCreate() {
 }
 
 function indexExists() {
-  return Promise.resolve(true);
+  return BPromise.resolve(true);
 }
 
 function indexPutMapping() {
