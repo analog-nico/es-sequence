@@ -57,7 +57,7 @@ sequence.get('post_id').then(function (id) {
 
 The API is in the process of settling, but has not yet had sufficient real-world testing to be considered stable. Backwards-compatibility will be maintained if reasonable.
 
-### sequence.init(client, [options]) -> Promise
+### sequence.init(client, [options, [cacheSize]]) -> Promise
 
 Initialization should be called **once** during server startup.
 
@@ -74,6 +74,12 @@ Initialization should be called **once** during server startup.
 Pass the options accordingly to overwrite the defaults. These parameters are used to store and update documents that represent a sequence in the index `esIndex` of document type `esType`.
 
 The index is configured by `init` for optimal performance. Thus you must use this index for sequences only!
+
+`cacheSize` default to 100
+
+Pass the cacheSize accordingly to overwrite the default. This parameter is used to define the number of IDs cached in sequence.
+ 
+If you have multiple instance of es-sequence running on different server you will want to set cacheSize to 1 to avoid jumps in the sequence of IDs.
 
 #### Error Handling
 

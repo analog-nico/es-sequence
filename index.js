@@ -8,6 +8,7 @@ var _client,
     _initPromise = null,
     _initError = null,
     _cache = {},
+    _cacheSize,
     _cacheFillPromise = null,
     _options = { esIndex: 'sequences', esType: 'sequence' },
     _internalOptions = {
@@ -39,6 +40,14 @@ function isInjectedClientValid(client) {
   }
 
   return true;
+}
+
+function isInjectedCacheSizeValid(cacheSize) {
+
+  return (_.isUndefined(cacheSize) === true ||
+  (typeof cacheSize === "number" &&
+  isFinite(cacheSize) &&
+  Math.floor(cacheSize) === cacheSize));
 }
 
 function addMappingToEsIndexIfMissing() {
@@ -77,7 +86,7 @@ function initEsIndexIfNeeded() {
 
 }
 
-function init(client, options) {
+function init(client, options, cacheSize) {
 
   // The following checks are done before the init promise is created
   // because errors thrown in the init promise are stored in _initError.
@@ -90,15 +99,25 @@ function init(client, options) {
   if (_initPromise !== null) {
     return BPromise.reject(new Error('Init was called while a previous init is pending.'));
   }
+
   if (_cacheFillPromise !== null) {
     return BPromise.reject(new Error('Init was called while get requests are pending.'));
+  }
+
+  if (isInjectedCacheSizeValid(cacheSize) === false) {
+    return BPromise.reject(new Error('Init was called with an invalid cacheSize parameter value.'));
   }
 
   _initPromise = new BPromise(function (resolve) {
 
     _client = client;
     _cache = {}; // In case init is called multiple times.
+    _cacheSize = 100;
     _initError = null;
+
+    if (_.isUndefined(cacheSize) === false) {
+      _cacheSize = cacheSize;
+    }
 
     if (_.isObject(options)) {
       _.merge(_options, options);
@@ -128,7 +147,7 @@ function fillCache(sequenceName) {
     }
 
     var bulkParams = { body: [] };
-    for ( var i = 0; i < 100; i+=1 ) {
+    for ( var i = 0; i < _cacheSize; i+=1 ) {
       // Action
       bulkParams.body.push({ index: { _index: _options.esIndex, _type: _options.esType, _id: sequenceName } });
       // Empty document

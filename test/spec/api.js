@@ -34,6 +34,8 @@ describe('The es-sequence API', function() {
     helpers.expectError(sequence.init({}), countdown);
     helpers.expectError(sequence.init({ indices: null }), countdown);
     helpers.expectError(sequence.init(function () {}), countdown);
+    helpers.expectError(sequence.init(esClient, null, "1"), countdown);
+    helpers.expectError(sequence.init(esClient, null, {}), countdown);
 
   });
 
@@ -45,6 +47,14 @@ describe('The es-sequence API', function() {
   it('should init without options', function (done) {
     // I do not expect the default "sequences" index not to be existing to be able to execute the tests on my test db.
     sequence.init(esClient)
+      .then(function () {
+          helpers.expectIndexToExist(esClient, 'sequences', true, done);
+      });
+  });
+
+  it('should init without options and a cacheSize', function (done) {
+    // I do not expect the default "sequences" index not to be existing to be able to execute the tests on my test db.
+    sequence.init(esClient, null, 10)
       .then(function () {
           helpers.expectIndexToExist(esClient, 'sequences', true, done);
       });
