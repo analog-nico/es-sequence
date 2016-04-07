@@ -1,5 +1,13 @@
 # Elasticsearch Sequence
 
+---
+
+## This repo needs a new maintainer!
+
+Shoot a comment [my way](https://github.com/analog-nico/es-sequence/issues/2) and I will hand the repo over to you.
+
+---
+
 [![Build Status](https://travis-ci.org/analog-nico/es-sequence.svg?branch=master)](https://travis-ci.org/analog-nico/es-sequence) [![Coverage Status](https://coveralls.io/repos/analog-nico/es-sequence/badge.png?branch=master)](https://coveralls.io/r/analog-nico/es-sequence?branch=master) [![Dependency Status](https://david-dm.org/analog-nico/es-sequence.svg)](https://david-dm.org/analog-nico/es-sequence) [![Code Climate](https://codeclimate.com/github/analog-nico/es-sequence.png)](https://codeclimate.com/github/analog-nico/es-sequence)
 
 `es-sequence` is a Node.js module for Elasticsearch that provides sequences of auto-incrementing integers that can be used to set the id of new documents.
@@ -7,6 +15,14 @@
 The sequences are persisted by the Elasticsearch cluster which makes them the last missing feature that maybe prevented you from using Elasticsearch as the sole database in your server stack.
 
 Inspired by the Perl library [ElasticSearchX-Sequence](https://github.com/clintongormley/ElasticSearchX-Sequence) by borrowing its [approach](http://blogs.perl.org/users/clinton_gormley/2011/10/elasticsearchsequence---a-blazing-fast-ticket-server.html).
+
+---
+
+## Migration from v0.2 to v1 (once v1 is released)
+
+es-sequence v1 includes the update of Bluebird from v2 to v3. This won't make a difference for simple use cases. However, if you use advanced Promise chains starting with the Promise returned by es-sequence, please check [Bluebird's new features and changes](http://bluebirdjs.com/docs/new-in-bluebird-3.html).
+
+---
 
 ## Installation
 
@@ -185,6 +201,12 @@ $ grunt ci
 
 ## Change History
 
+- v1.0.0 (upcoming)
+  - **Breaking Change**: Updated `bluebird` to v3
+  - Added ability to define the cache size
+    *(Thanks to @s-dubon for the [pull request #1](https://github.com/analog-nico/es-sequence/pull/1))*
+  - Added new node.js versions to CI build
+  - Updated `lodash` to v4
 - v0.2.2 (2014-10-15)
   - Updated dependencies
 - v0.2.1 (2014-08-05)
