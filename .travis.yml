@@ -1,7 +1,16 @@
 language: node_js
+
 node_js:
   - "0.10"
+  - "0.12"
+  - "iojs"
+  - "4"
+  - "5"
+
 services:
   - elasticsearch
+
 before_script:
   - curl -XGET 'localhost:9200'
+
+sudo: false
