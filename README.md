@@ -1,3 +1,5 @@
+**WARNING**: This repository is not maintained anymore.
+
 # Elasticsearch Sequence
 
 ---
